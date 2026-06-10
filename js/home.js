@@ -19,7 +19,7 @@ function pkBestPrice(card) {
 
 function miniCard({ img, name, sub, priceText, onClick }) {
   const div = document.createElement("div");
-  div.className = "mini-card";
+  div.className = `mini-card ${rarityClass(`${name} ${sub}`)}`.trim();
   div.innerHTML = `
     <img loading="lazy" src="${esc(img)}" alt="${esc(name)}" />
     <div class="name" title="${esc(name)}">${esc(name)}</div>
@@ -32,49 +32,76 @@ function miniCard({ img, name, sub, priceText, onClick }) {
 function pkModal(card) {
   const p = pkBestPrice(card);
   const cm = card.cardmarket?.prices;
-  const buyUrl = card.tcgplayer?.url || TCGP_SEARCH.pokemon(`${card.name} ${card.set.name}`);
   openModal(`
     <div><img class="art" src="${esc(card.images.large)}" alt="${esc(card.name)}" /></div>
     <div>
       <h2>${esc(card.name)}</h2>
       <div class="meta">${esc(card.set.name)} · #${esc(card.number)} · ${esc(card.rarity ?? "")}</div>
+      <div class="detail-grid">
+        ${detailStat("Set", card.set?.name)}
+        ${detailStat("Number", `#${card.number}/${card.set?.printedTotal ?? "?"}`)}
+        ${detailStat("Rarity", card.rarity)}
+        ${detailStat("Artist", card.artist)}
+        ${detailStat("Types", card.types?.join(", "))}
+        ${detailStat("Release", card.set?.releaseDate)}
+      </div>
       ${p ? `
         <div class="trend-row">
           <span class="t">TCGplayer market<b>${usd(p.market)}</b></span>
           <span class="t">Low<b>${usd(p.low)}</b></span>
           <span class="t">High<b>${usd(p.high)}</b></span>
         </div>
-        <div class="note">Updated ${esc(card.tcgplayer?.updatedAt ?? "")} · TCGplayer via Pokémon TCG API</div>` : ""}
+        ${localMarketNote("Pokémon TCG API and TCGplayer market feeds", card.tcgplayer?.updatedAt)}` : ""}
       ${cm ? `
         <div class="trend-row">
           <span class="t">CM 1-day avg<b>${eur(cm.avg1)}</b></span>
           <span class="t">CM 7-day avg<b>${eur(cm.avg7)}</b></span>
           <span class="t">CM 30-day avg<b>${eur(cm.avg30)}</b></span>
         </div>` : ""}
-      <div class="buy-row">
-        <a class="btn btn-buy" href="${esc(buyUrl)}" target="_blank" rel="noopener">Buy on TCGplayer</a>
-        <a class="btn btn-ghost" href="pokemon.html">Browse Pokémon sets</a>
-      </div>
     </div>`);
 }
 
 function opModal(card) {
-  const cleanName = card.card_name.replace(/\s*\([^)]*\)/g, "").trim();
-  const buyUrl = TCGP_SEARCH.onepiece(`${cleanName} ${card.card_set_id}`);
   openModal(`
     <div><img class="art" src="${esc(card.card_image)}" alt="${esc(card.card_name)}" /></div>
     <div>
       <h2>${esc(card.card_name)}</h2>
       <div class="meta">${esc(card.set_name)} · ${esc(card.card_set_id)} · ${esc(card.rarity ?? "")}</div>
+      <div class="detail-grid">
+        ${detailStat("Set", card.set_name)}
+        ${detailStat("Card ID", card.card_set_id)}
+        ${detailStat("Rarity", card.rarity)}
+        ${detailStat("Type", card.card_type)}
+        ${detailStat("Color", card.card_color)}
+        ${detailStat("Cost", card.card_cost)}
+        ${detailStat("Power", card.card_power)}
+        ${detailStat("Counter", card.counter_amount)}
+        ${detailStat("Attribute", card.attribute)}
+      </div>
       <div class="trend-row">
         <span class="t">TCGplayer market<b>${usd(parseFloat(card.market_price))}</b></span>
         <span class="t">Listed (low)<b>${usd(parseFloat(card.inventory_price))}</b></span>
       </div>
-      <div class="note">Updated ${esc(card.date_scraped ?? "")} · TCGplayer via OPTCG API</div>
-      <div class="buy-row">
-        <a class="btn btn-buy" href="${esc(buyUrl)}" target="_blank" rel="noopener">Buy on TCGplayer</a>
-        <a class="btn btn-ghost" href="onepiece.html">Browse One Piece sets</a>
+      ${card.card_text ? `<p class="card-text">${esc(card.card_text)}</p>` : ""}
+      ${localMarketNote("OPTCG API and TCGplayer market feeds", card.date_scraped)}
+    </div>`);
+}
+
+function cachedCardModal(card, game) {
+  const isPokemon = game === "pokemon";
+  openModal(`
+    <div><img class="art" src="${esc(card.image)}" alt="${esc(card.name)}" /></div>
+    <div>
+      <h2>${esc(card.name)}</h2>
+      <div class="meta">${esc(card.sub ?? "")}</div>
+      <div class="detail-grid">
+        ${detailStat("Game", isPokemon ? "Pokémon" : "One Piece")}
+        ${detailStat("Card ID", card.id)}
+        ${detailStat("Market price", card.priceText ?? usd(card.price))}
+        ${detailStat("Tracked from", card.sub)}
       </div>
+      <p class="card-text">This card is from the local featured snapshot. Open the ${isPokemon ? "Pokémon" : "One Piece"} browser for the full set view and live searchable card data.</p>
+      ${localMarketNote(isPokemon ? "cached Pokémon TCG API data" : "cached OPTCG API data")}
     </div>`);
 }
 
@@ -97,7 +124,10 @@ function renderSnapshotMovers(moversEl, data) {
   const panel = moversEl.closest(".panel");
   let items, fmt;
   if (data.ready) {
-    items = [...data.pokemon, ...data.onepiece]
+    items = [
+      ...data.pokemon.map((m) => ({ ...m, game: "pokemon", currency: "USD" })),
+      ...data.onepiece.map((m) => ({ ...m, game: "onepiece", currency: "USD" })),
+    ]
       .sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct))
       .slice(0, 12);
     fmt = usd;
@@ -105,7 +135,7 @@ function renderSnapshotMovers(moversEl, data) {
     panel.querySelector(".panel-sub").textContent =
       "Day-over-day TCGplayer market price changes in the newest Pokémon and One Piece sets.";
   } else if (data.interim?.pokemon?.length) {
-    items = data.interim.pokemon;
+    items = data.interim.pokemon.map((m) => ({ ...m, game: "pokemon", currency: "EUR" }));
     fmt = eur;
     panel.querySelector(".badge").textContent = "Cardmarket €, 1d vs 7d avg";
     panel.querySelector(".panel-sub").textContent =
@@ -125,7 +155,14 @@ function renderSnapshotMovers(moversEl, data) {
       <img loading="lazy" src="${esc(m.image)}" alt="${esc(m.name)}" />
       <span class="m-name">${esc(m.name)}<small>${esc(m.sub)} · ${fmt(m.old)} → ${fmt(m.new)}</small></span>
       <span class="delta ${m.pct >= 0 ? "up" : "down"}">${m.pct >= 0 ? "▲" : "▼"} ${Math.abs(m.pct).toFixed(1)}%</span>`;
-    div.addEventListener("click", () => window.open(m.buy, "_blank", "noopener"));
+    div.addEventListener("click", () => cachedCardModal({
+      id: m.id,
+      name: m.name,
+      image: m.image,
+      sub: m.sub,
+      price: m.new,
+      priceText: fmt(m.new),
+    }, m.game ?? "pokemon"));
     moversEl.appendChild(div);
   });
   return true;
@@ -144,7 +181,7 @@ async function loadFeaturedCache() {
   }
 }
 
-function renderCachedRow(el, cards) {
+function renderCachedRow(el, cards, game) {
   el.innerHTML = "";
   cards.forEach((c) =>
     el.appendChild(miniCard({
@@ -152,7 +189,7 @@ function renderCachedRow(el, cards) {
       name: c.name,
       sub: c.sub,
       priceText: usd(c.price),
-      onClick: () => window.open(c.buy, "_blank", "noopener"),
+      onClick: () => cachedCardModal(c, game),
     }))
   );
 }
@@ -169,7 +206,7 @@ async function loadPokemonPanels(cache) {
     label.textContent = pk.set.releaseDate
       ? `${pk.set.name} — released ${pk.set.releaseDate}`
       : pk.set.name;
-    renderCachedRow(featuredEl, pk.cards);
+    renderCachedRow(featuredEl, pk.cards, "pokemon");
     document.getElementById("freshness").textContent =
       `Prices cached ${cache.updated.slice(0, 10)} · refreshed automatically every 6 hours.`;
     if (!moversRendered) {
@@ -255,7 +292,7 @@ async function loadOnePiecePanel(cache) {
   const label = document.getElementById("op-set-label");
   if (cache) {
     label.textContent = `${cache.onepiece.set.name} (${cache.onepiece.set.id})`;
-    renderCachedRow(featuredEl, cache.onepiece.cards);
+    renderCachedRow(featuredEl, cache.onepiece.cards, "onepiece");
     return;
   }
   try {
@@ -297,15 +334,23 @@ function renderWatchlist() {
   const list = wlAll();
   panel.hidden = list.length === 0;
   box.innerHTML = list.map((w) => `
-    <div class="wl-row">
+    <div class="wl-row" data-game="${esc(w.game)}" data-id="${esc(w.id)}">
       <img loading="lazy" src="${esc(w.image)}" alt="" />
       <span class="m-name">${esc(w.name)}<small>${esc(w.sub)} · added ${esc(w.added)}</small></span>
       <span class="price">${w.price != null ? usd(w.price) : "—"}</span>
-      <a class="btn btn-buy btn-sm" href="${esc(w.buy)}" target="_blank" rel="noopener">Buy</a>
       <button class="wl-remove" data-game="${esc(w.game)}" data-id="${esc(w.id)}" aria-label="Remove">✕</button>
     </div>`).join("");
+  box.querySelectorAll(".wl-row").forEach((row, i) =>
+    row.addEventListener("click", () => cachedCardModal({
+      id: list[i].id,
+      name: list[i].name,
+      image: list[i].image,
+      sub: list[i].sub,
+      price: list[i].price,
+    }, list[i].game)));
   box.querySelectorAll(".wl-remove").forEach((btn) =>
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
       wlRemove(btn.dataset.game, btn.dataset.id);
       renderWatchlist();
     })

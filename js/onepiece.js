@@ -25,7 +25,7 @@ function price(card) {
 function cardLi(card) {
   const p = price(card);
   const li = document.createElement("li");
-  li.className = "tcard";
+  li.className = `tcard ${rarityClass(`${card.rarity ?? ""} ${card.card_name ?? ""}`)}`.trim();
   li.innerHTML = `
     <img loading="lazy" src="${esc(card.card_image)}" alt="${esc(card.card_name)}" />
     <div class="name">${esc(card.card_name)}</div>
@@ -41,7 +41,7 @@ function cardLi(card) {
     name: card.card_name,
     image: card.card_image,
     sub: `${card.set_name} · ${card.card_set_id}`,
-    buy: TCGP_SEARCH.onepiece(`${cleanName} ${card.card_set_id}`),
+    detail: `onepiece:${card.card_set_id}`,
     price: p,
   }));
   li.addEventListener("click", () => openCard(card));
@@ -76,10 +76,18 @@ function render() {
 function openCard(card) {
   const p = price(card);
   const inv = parseFloat(card.inventory_price);
-  // Names embed suffixes like "(OP15-118) (Manga)" — strip them so the
-  // TCGplayer search query stays clean.
-  const cleanName = card.card_name.replace(/\s*\([^)]*\)/g, "").trim();
-  const buyUrl = TCGP_SEARCH.onepiece(`${cleanName} ${card.card_set_id}`);
+  const detailRows = [
+    detailStat("Set", card.set_name),
+    detailStat("Card ID", card.card_set_id),
+    detailStat("Rarity", card.rarity),
+    detailStat("Type", card.card_type),
+    detailStat("Color", card.card_color),
+    detailStat("Cost", card.card_cost),
+    detailStat("Power", card.card_power),
+    detailStat("Counter", card.counter_amount),
+    detailStat("Attribute", card.attribute),
+    detailStat("Life", card.life),
+  ].join("");
 
   openModal(`
     <div><img class="art" src="${esc(card.card_image)}" alt="${esc(card.card_name)}" /></div>
@@ -89,6 +97,7 @@ function openCard(card) {
         ${esc(card.set_name)} · ${esc(card.card_set_id)} · ${esc(card.rarity ?? "")} ·
         ${esc(card.card_type ?? "")} ${card.card_color ? "· " + esc(card.card_color) : ""}
       </div>
+      <div class="detail-grid">${detailRows}</div>
       <table class="price-table">
         <thead><tr><th>TCGplayer (USD)</th><th>Market</th><th>Listed (low)</th></tr></thead>
         <tbody><tr>
@@ -97,8 +106,8 @@ function openCard(card) {
           <td>${isNaN(inv) ? "—" : usd(inv)}</td>
         </tr></tbody>
       </table>
-      <div class="note">Updated ${esc(card.date_scraped ?? "")} · source: TCGplayer via OPTCG API</div>
-      ${card.card_text ? `<p style="font-size:0.85rem">${esc(card.card_text)}</p>` : ""}
+      ${localMarketNote("OPTCG API and TCGplayer market feeds", card.date_scraped)}
+      ${card.card_text ? `<p class="card-text">${esc(card.card_text)}</p>` : ""}
       <div class="trend-row">
         ${card.card_cost != null ? `<span class="t">Cost<b>${esc(card.card_cost)}</b></span>` : ""}
         ${card.card_power ? `<span class="t">Power<b>${esc(card.card_power)}</b></span>` : ""}
@@ -106,9 +115,6 @@ function openCard(card) {
         ${card.attribute ? `<span class="t">Attribute<b>${esc(card.attribute)}</b></span>` : ""}
       </div>
       <div class="card-history" id="card-history"></div>
-      <div class="buy-row">
-        <a class="btn btn-buy" href="${esc(buyUrl)}" target="_blank" rel="noopener">Buy on TCGplayer</a>
-      </div>
     </div>
   `);
   renderCardHistory("onepiece", card.card_set_id, document.getElementById("card-history"));

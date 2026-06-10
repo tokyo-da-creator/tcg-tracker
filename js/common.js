@@ -1,12 +1,5 @@
 /* Shared helpers: news ticker, formatting, modal. */
 
-const TCGP_SEARCH = {
-  pokemon: (q) =>
-    `https://www.tcgplayer.com/search/pokemon/product?q=${encodeURIComponent(q)}&view=grid`,
-  onepiece: (q) =>
-    `https://www.tcgplayer.com/search/one-piece-card-game/product?q=${encodeURIComponent(q)}&view=grid`,
-};
-
 function usd(n) {
   if (n == null || isNaN(n)) return "—";
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -29,6 +22,30 @@ function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   })[c]);
+}
+
+function rarityClass(rarity) {
+  const r = String(rarity ?? "").toLowerCase();
+  if (r.includes("manga")) return "rarity-glow-manga";
+  if (r.includes("secret") || r.includes("hyper")) return "rarity-glow-secret";
+  if (r.includes("special") || r.includes("alternate") || r.includes("illustration")) return "rarity-glow-special";
+  if (r.includes("ultra") || r.includes("rainbow") || r.includes("gold")) return "rarity-glow-ultra";
+  if (r.includes("holo") || r.includes("double rare") || r.includes("ace")) return "rarity-glow-holo";
+  if (r.includes("super")) return "rarity-glow-super";
+  if (r.includes("leader")) return "rarity-glow-leader";
+  if (r.includes("rare")) return "rarity-glow-rare";
+  if (r.includes("uncommon")) return "rarity-glow-uncommon";
+  if (r.includes("common")) return "rarity-glow-common";
+  return "";
+}
+
+function detailStat(label, value) {
+  const shown = value == null || value === "" || Number.isNaN(value) ? "—" : value;
+  return `<div class="detail-stat"><span>${esc(label)}</span><b>${esc(shown)}</b></div>`;
+}
+
+function localMarketNote(source, updated) {
+  return `<div class="note">Data shown in PokeSnipr from ${esc(source)}${updated ? ` · updated ${esc(updated)}` : ""}.</div>`;
 }
 
 /* ---------- News ticker ----------

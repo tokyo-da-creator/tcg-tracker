@@ -165,17 +165,19 @@ function renderSpreadPanel(analytics) {
   });
 
   const tight = rows.flatMap((r) =>
-    r.spread.tightest.map((t) => ({ ...t, set: r.name })))
+    r.spread.tightest.map((t) => ({ ...t, set: r.name, game: r.game })))
     .sort((a, b) => b.ratio - a.ratio).slice(0, 10);
   document.querySelector("#tight-table tbody").innerHTML = tight.map((t) => `
-    <tr>
+    <tr class="detail-row" data-kind="tight" data-name="${esc(t.name)}">
       <td class="cell-card"><img loading="lazy" src="${esc(t.image)}" alt="" />${esc(t.name)}</td>
       <td>${esc(t.set)}</td>
       <td>${usd(t.market)}</td>
       <td>${usd(t.low)}</td>
       <td><b>${(t.ratio * 100).toFixed(0)}%</b></td>
-      <td>${t.buy ? `<a class="btn btn-buy btn-sm" href="${esc(t.buy)}" target="_blank" rel="noopener">Buy</a>` : ""}</td>
+      <td><button class="btn btn-ghost btn-sm" type="button">Details</button></td>
     </tr>`).join("");
+  document.querySelectorAll("#tight-table .detail-row").forEach((row, i) =>
+    row.addEventListener("click", () => openAnalyticsCard(tight[i])));
 }
 
 function renderMoversTable(movers) {
@@ -184,14 +186,14 @@ function renderMoversTable(movers) {
   const sub = document.getElementById("movers-sub");
   let rows, fmt;
   if (movers?.ready) {
-    rows = [...movers.pokemon.map((m) => ({ ...m, game: "Pokémon" })),
-            ...movers.onepiece.map((m) => ({ ...m, game: "One Piece" }))]
+    rows = [...movers.pokemon.map((m) => ({ ...m, game: "Pokémon", currency: "USD" })),
+            ...movers.onepiece.map((m) => ({ ...m, game: "One Piece", currency: "USD" }))]
       .sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
     fmt = usd;
     badge.textContent = `TCGplayer $, ${movers.from} → ${movers.to}`;
     sub.textContent = "Day-over-day TCGplayer market price changes across tracked sets.";
   } else if (movers?.interim?.pokemon?.length) {
-    rows = movers.interim.pokemon.map((m) => ({ ...m, game: "Pokémon" }));
+    rows = movers.interim.pokemon.map((m) => ({ ...m, game: "Pokémon", currency: "EUR" }));
     fmt = eur;
     badge.textContent = "Cardmarket €, 1d vs 7d avg";
     sub.textContent = `Cardmarket rolling-average moves in ${movers.interim.setName}. TCGplayer day-over-day moves appear once two daily snapshots exist.`;
@@ -200,14 +202,16 @@ function renderMoversTable(movers) {
     return;
   }
   tbody.innerHTML = rows.map((m) => `
-    <tr>
+    <tr class="detail-row">
       <td class="cell-card"><img loading="lazy" src="${esc(m.image)}" alt="" />${esc(m.name)}</td>
       <td>${esc(m.sub.split("·")[0].trim())}</td>
       <td>${fmt(m.old)}</td>
       <td>${fmt(m.new)}</td>
       <td><span class="delta ${m.pct >= 0 ? "up" : "down"}">${m.pct >= 0 ? "▲" : "▼"} ${Math.abs(m.pct).toFixed(1)}%</span></td>
-      <td><a class="btn btn-buy btn-sm" href="${esc(m.buy)}" target="_blank" rel="noopener">Buy</a></td>
+      <td><button class="btn btn-ghost btn-sm" type="button">Details</button></td>
     </tr>`).join("");
+  tbody.querySelectorAll(".detail-row").forEach((row, i) =>
+    row.addEventListener("click", () => openAnalyticsCard({ ...rows[i], market: rows[i].new })));
 }
 
 function renderSetsTable(analytics) {
@@ -224,6 +228,25 @@ function renderSetsTable(analytics) {
       <td>${usd(s.avgValue)}</td>
       <td class="cell-card"><img loading="lazy" src="${esc(s.topCard.image)}" alt="" />${esc(s.topCard.name)} · <b>${usd(s.topCard.price)}</b></td>
     </tr>`).join("");
+}
+
+function openAnalyticsCard(card) {
+  openModal(`
+    <div><img class="art" src="${esc(card.image ?? card.topCard?.image ?? "")}" alt="${esc(card.name ?? card.topCard?.name ?? "")}" /></div>
+    <div>
+      <h2>${esc(card.name ?? card.topCard?.name ?? "Card details")}</h2>
+      <div class="meta">${esc(card.set ?? card.sub ?? "")}</div>
+      <div class="detail-grid">
+        ${detailStat("Game", GAME_LABEL[card.game] ?? card.game)}
+        ${detailStat("Market", card.market != null ? usd(card.market) : null)}
+        ${detailStat("Lowest listing", card.low != null ? usd(card.low) : null)}
+        ${detailStat("Listing / market", card.ratio != null ? `${(card.ratio * 100).toFixed(0)}%` : null)}
+        ${detailStat("Previous", card.old != null ? (card.currency === "EUR" ? eur(card.old) : usd(card.old)) : null)}
+        ${detailStat("Current", card.new != null ? (card.currency === "EUR" ? eur(card.new) : usd(card.new)) : null)}
+        ${detailStat("Change", card.pct != null ? `${card.pct >= 0 ? "▲" : "▼"} ${Math.abs(card.pct).toFixed(1)}%` : null)}
+      </div>
+      ${localMarketNote("PokeSnipr analytics snapshots")}
+    </div>`);
 }
 
 (async () => {

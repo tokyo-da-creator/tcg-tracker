@@ -37,7 +37,7 @@ function bestPrice(card) {
 function cardLi(card) {
   const p = bestPrice(card);
   const li = document.createElement("li");
-  li.className = "tcard";
+  li.className = `tcard ${rarityClass(card.rarity)}`.trim();
   li.innerHTML = `
     <img loading="lazy" src="${esc(card.images.small)}" alt="${esc(card.name)}" />
     <div class="name">${esc(card.name)}</div>
@@ -52,7 +52,7 @@ function cardLi(card) {
     name: card.name,
     image: card.images.small,
     sub: `${card.set.name} · #${card.number}`,
-    buy: card.tcgplayer?.url || TCGP_SEARCH.pokemon(`${card.name} ${card.set.name}`),
+    detail: `pokemon:${card.id}`,
     price: p ? (p.market ?? p.mid) : null,
   }));
   li.addEventListener("click", () => openCard(card));
@@ -134,7 +134,23 @@ function openCard(card) {
       <span class="t">30-day avg<b>${eur(cm.avg30)}</b></span>
     </div>` : "";
 
-  const buyUrl = card.tcgplayer?.url || TCGP_SEARCH.pokemon(`${card.name} ${card.set.name}`);
+  const detailRows = [
+    detailStat("Set", card.set?.name),
+    detailStat("Number", `#${card.number}/${card.set?.printedTotal ?? "?"}`),
+    detailStat("Rarity", card.rarity),
+    detailStat("Artist", card.artist),
+    detailStat("Types", card.types?.join(", ")),
+    detailStat("HP", card.hp),
+    detailStat("Stage", card.subtypes?.join(", ")),
+    detailStat("Release", card.set?.releaseDate),
+  ].join("");
+
+  const rules = [
+    ...(card.abilities ?? []).map((a) => `<p class="card-text"><b>${esc(a.name)}</b> (${esc(a.type)}): ${esc(a.text)}</p>`),
+    ...(card.attacks ?? []).map((a) => `<p class="card-text"><b>${esc(a.name)}</b> ${a.damage ? `· ${esc(a.damage)}` : ""}<br>${esc(a.text ?? "")}</p>`),
+    card.rules?.length ? `<p class="card-text">${card.rules.map(esc).join("<br>")}</p>` : "",
+    card.flavorText ? `<p class="card-text">${esc(card.flavorText)}</p>` : "",
+  ].join("");
 
   openModal(`
     <div><img class="art" src="${esc(card.images.large)}" alt="${esc(card.name)}" /></div>
@@ -144,19 +160,17 @@ function openCard(card) {
         ${esc(card.set.name)} · #${esc(card.number)}/${esc(card.set.printedTotal)} ·
         ${esc(card.rarity ?? "Unknown rarity")} ${card.artist ? "· Illus. " + esc(card.artist) : ""}
       </div>
+      <div class="detail-grid">${detailRows}</div>
+      ${rules}
       ${rows ? `
         <table class="price-table">
           <thead><tr><th>TCGplayer (USD)</th><th>Low</th><th>Market</th><th>High</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
-        <div class="note">Updated ${esc(card.tcgplayer?.updatedAt ?? "")} · source: TCGplayer via Pokémon TCG API</div>`
+        ${localMarketNote("Pokémon TCG API and TCGplayer market feeds", card.tcgplayer?.updatedAt)}`
         : `<p class="note">No TCGplayer price listed for this card.</p>`}
       ${trendHtml}
       <div class="card-history" id="card-history"></div>
-      <div class="buy-row">
-        <a class="btn btn-buy" href="${esc(buyUrl)}" target="_blank" rel="noopener">Buy on TCGplayer</a>
-        <a class="btn btn-ghost" href="https://mycollectrics.com" target="_blank" rel="noopener">Collectrics analytics</a>
-      </div>
     </div>
   `);
   renderCardHistory("pokemon", card.id, document.getElementById("card-history"));
