@@ -63,6 +63,26 @@
       <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
     </section>
 
+    <section class="panel" id="spread-panel">
+      <div class="panel-head">
+        <h2>Listing tightness — supply proxy</h2>
+        <span class="badge">Lowest TCGplayer listing ÷ market price</span>
+      </div>
+      <p class="panel-sub">
+        How close the cheapest active TCGplayer listing sits to the market price, per set (cards $2+).
+        Near or above 100% means sellers aren't undercutting — supply is tight. Well below 100% means
+        heavy undercutting — supply is loose. Computed from live TCGplayer listing and market prices.
+      </p>
+      <div class="chart-wrap"><canvas id="chart-spread"></canvas></div>
+      <h3 class="sub-h">Tightest cards right now</h3>
+      <div class="table-scroll">
+        <table class="data-table" id="tight-table">
+          <thead><tr><th>Card</th><th>Set</th><th>Market</th><th>Lowest listing</th><th>Listing ÷ market</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="panel">
       <div class="panel-head">
         <h2 id="movers-title">Biggest movers</h2>

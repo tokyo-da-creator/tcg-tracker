@@ -527,6 +527,26 @@ main {
 .wl-remove { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.1rem; }
 .wl-remove:hover { color: var(--down); }
 
+.sub-h { font-size: 0.95rem; margin: 1.25rem 0 0.5rem; }
+
+/* ---------- Card history sparkline ---------- */
+.card-history { margin-top: 0.75rem; color: var(--accent); }
+.card-history .spark { width: 100%; height: 90px; display: block; }
+.hist-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+.hist-range {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ticker { animation: none; }
 }

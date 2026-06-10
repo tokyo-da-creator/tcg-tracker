@@ -152,12 +152,14 @@ function openCard(card) {
         <div class="note">Updated ${esc(card.tcgplayer?.updatedAt ?? "")} · source: TCGplayer via Pokémon TCG API</div>`
         : `<p class="note">No TCGplayer price listed for this card.</p>`}
       ${trendHtml}
+      <div class="card-history" id="card-history"></div>
       <div class="buy-row">
         <a class="btn btn-buy" href="${esc(buyUrl)}" target="_blank" rel="noopener">Buy on TCGplayer</a>
         <a class="btn btn-ghost" href="https://mycollectrics.com" target="_blank" rel="noopener">Collectrics analytics</a>
       </div>
     </div>
   `);
+  renderCardHistory("pokemon", card.id, document.getElementById("card-history"));
 }
 
 async function init() {

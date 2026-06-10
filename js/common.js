@@ -97,6 +97,65 @@ async function fetchNewsLive() {
   return all;
 }
 
+/* ---------- Per-card price history (from daily snapshots) ---------- */
+let HISTORY_CACHE = null;
+
+async function getHistory() {
+  if (!HISTORY_CACHE) {
+    try {
+      const res = await fetch("data/price-history.json", { cache: "no-cache" });
+      HISTORY_CACHE = res.ok ? await res.json() : { snapshots: [] };
+    } catch {
+      HISTORY_CACHE = { snapshots: [] };
+    }
+  }
+  return HISTORY_CACHE;
+}
+
+function sparklineSVG(points, w = 360, h = 90) {
+  const vals = points.map((p) => p.v);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const pad = (max - min) * 0.15 || max * 0.05 || 1;
+  const lo = min - pad, hi = max + pad;
+  const x = (i) => 4 + (i / (points.length - 1)) * (w - 8);
+  const y = (v) => h - 4 - ((v - lo) / (hi - lo)) * (h - 8);
+  const path = points.map((p, i) => `${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(" ");
+  const last = points[points.length - 1];
+  return `<svg viewBox="0 0 ${w} ${h}" class="spark" preserveAspectRatio="none">
+    <polyline points="${path}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+    <circle cx="${x(points.length - 1).toFixed(1)}" cy="${y(last.v).toFixed(1)}" r="3" fill="currentColor" />
+  </svg>`;
+}
+
+/* Renders a TCGplayer price trend for one card into `el`, if we have
+ * snapshot history for it (only the newest sets are tracked daily). */
+async function renderCardHistory(game, id, el) {
+  if (!el) return;
+  const h = await getHistory();
+  const pts = [];
+  for (const snap of h.snapshots) {
+    for (const sid of Object.keys(snap[game] ?? {})) {
+      const v = snap[game][sid][id];
+      if (v != null) { pts.push({ date: snap.date, v }); break; }
+    }
+  }
+  if (pts.length === 0) return; // not in the daily-tracked sets
+  if (pts.length === 1) {
+    el.innerHTML = `<div class="note">Daily price tracking started ${esc(pts[0].date)} — the trend chart appears as snapshots accumulate.</div>`;
+    return;
+  }
+  const first = pts[0].v, last = pts[pts.length - 1].v;
+  const pct = first ? ((last - first) / first) * 100 : 0;
+  el.innerHTML = `
+    <div class="hist-head">
+      <span>TCGplayer market trend</span>
+      <span class="delta ${pct >= 0 ? "up" : "down"}">${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(1)}%</span>
+    </div>
+    ${sparklineSVG(pts)}
+    <div class="hist-range"><span>${esc(pts[0].date)} · ${usd(first)}</span><span>${esc(pts[pts.length - 1].date)} · ${usd(last)}</span></div>`;
+}
+
 /* ---------- Modal ---------- */
 function openModal(innerHTML) {
   const root = document.getElementById("modal-root");

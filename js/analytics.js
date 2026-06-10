@@ -135,6 +135,49 @@ function renderTrendChart(analytics) {
   });
 }
 
+function renderSpreadPanel(analytics) {
+  const panel = document.getElementById("spread-panel");
+  const rows = [
+    ...analytics.pokemon.sets.filter((s) => s.spread).map((s) => ({ ...s, game: "pokemon" })),
+    ...analytics.onepiece.sets.filter((s) => s.spread).map((s) => ({ ...s, game: "onepiece" })),
+  ].sort((a, b) => b.spread.median - a.spread.median);
+  if (!rows.length) { panel.style.display = "none"; return; }
+
+  new Chart(document.getElementById("chart-spread"), {
+    type: "bar",
+    data: {
+      labels: rows.map((r) => r.name),
+      datasets: [{
+        data: rows.map((r) => r.spread.median * 100),
+        backgroundColor: rows.map((r) => (r.game === "pokemon" ? "#ffcb05" : "#e63946")),
+        borderRadius: 6,
+      }],
+    },
+    options: {
+      indexAxis: "y",
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (c) => ` median lowest listing = ${c.raw.toFixed(1)}% of market (${rows[c.dataIndex].spread.cards} cards)` } },
+      },
+      scales: { x: { ticks: { callback: (v) => v + "%" } } },
+    },
+  });
+
+  const tight = rows.flatMap((r) =>
+    r.spread.tightest.map((t) => ({ ...t, set: r.name })))
+    .sort((a, b) => b.ratio - a.ratio).slice(0, 10);
+  document.querySelector("#tight-table tbody").innerHTML = tight.map((t) => `
+    <tr>
+      <td class="cell-card"><img loading="lazy" src="${esc(t.image)}" alt="" />${esc(t.name)}</td>
+      <td>${esc(t.set)}</td>
+      <td>${usd(t.market)}</td>
+      <td>${usd(t.low)}</td>
+      <td><b>${(t.ratio * 100).toFixed(0)}%</b></td>
+      <td>${t.buy ? `<a class="btn btn-buy btn-sm" href="${esc(t.buy)}" target="_blank" rel="noopener">Buy</a>` : ""}</td>
+    </tr>`).join("");
+}
+
 function renderMoversTable(movers) {
   const tbody = document.querySelector("#movers-table tbody");
   const badge = document.getElementById("movers-badge");
@@ -196,6 +239,7 @@ function renderSetsTable(analytics) {
     renderSetValueChart(analytics);
     renderHistoryChart(analytics);
     renderTrendChart(analytics);
+    renderSpreadPanel(analytics);
     renderMoversTable(movers);
     renderSetsTable(analytics);
   } catch (err) {

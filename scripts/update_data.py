@@ -104,6 +104,24 @@ def pk_best_market(card) -> float:
     return max((v.get("market") or 0 for v in variants), default=0)
 
 
+def pk_best_variant(card):
+    """(market, low) of the highest-market print variant, or None."""
+    variants = [v for v in ((card.get("tcgplayer") or {}).get("prices") or {}).values()
+                if v.get("market")]
+    if not variants:
+        return None
+    best = max(variants, key=lambda v: v["market"])
+    return (best["market"], best.get("low"))
+
+
+def median(xs):
+    xs = sorted(xs)
+    n = len(xs)
+    if not n:
+        return None
+    return xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2
+
+
 def pk_card_meta(card) -> dict:
     return {
         "name": card["name"],
@@ -180,6 +198,23 @@ def pk_set_analytics(s, cards):
         "topCard": {"name": top_card["name"], "price": round(top_price, 2),
                     "image": top_card["images"]["small"]},
     }
+    # Listing tightness: lowest active TCGplayer listing vs market price.
+    spreads = []
+    for c, p in priced:
+        bv = pk_best_variant(c)
+        if bv and bv[1] and p >= 2:  # skip bulk noise
+            spreads.append((c, p, bv[1], bv[1] / p))
+    if len(spreads) >= 10:
+        tight = sorted(spreads, key=lambda x: x[3], reverse=True)[:8]
+        out["spread"] = {
+            "median": round(median([x[3] for x in spreads]), 3),
+            "cards": len(spreads),
+            "tightest": [{"name": c["name"], "image": c["images"]["small"],
+                          "market": round(p, 2), "low": round(lo, 2),
+                          "ratio": round(r, 2),
+                          "buy": (c.get("tcgplayer") or {}).get("url") or ""}
+                         for c, p, lo, r in tight],
+        }
     # Cardmarket aggregate trend (only meaningful with broad coverage)
     if len(cm) >= len(priced) * 0.5:
         out["cardmarket"] = {
@@ -198,7 +233,7 @@ def op_set_analytics(s, cards):
         return None
     total = sum(p for _, p in priced)
     top_card, top_price = max(priced, key=lambda x: x[1])
-    return {
+    out = {
         "id": s["set_id"],
         "name": s["set_name"],
         "pricedCards": len(priced),
@@ -207,6 +242,26 @@ def op_set_analytics(s, cards):
         "topCard": {"name": top_card["card_name"], "price": round(top_price, 2),
                     "image": top_card["card_image"]},
     }
+    spreads = []
+    for c, p in priced:
+        try:
+            inv = float(c.get("inventory_price"))
+        except (TypeError, ValueError):
+            continue
+        if inv and p >= 2:
+            spreads.append((c, p, inv, inv / p))
+    if len(spreads) >= 10:
+        tight = sorted(spreads, key=lambda x: x[3], reverse=True)[:8]
+        out["spread"] = {
+            "median": round(median([x[3] for x in spreads]), 3),
+            "cards": len(spreads),
+            "tightest": [{"name": c["card_name"], "image": c["card_image"],
+                          "market": round(p, 2), "low": round(inv, 2),
+                          "ratio": round(r, 2),
+                          "buy": op_card_meta(c)["buy"]}
+                         for c, p, inv, r in tight],
+        }
+    return out
 
 
 def featured_block(set_label, set_id, rows, release=""):

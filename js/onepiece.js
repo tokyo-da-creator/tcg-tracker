@@ -105,11 +105,13 @@ function openCard(card) {
         ${card.counter_amount != null ? `<span class="t">Counter<b>${esc(card.counter_amount)}</b></span>` : ""}
         ${card.attribute ? `<span class="t">Attribute<b>${esc(card.attribute)}</b></span>` : ""}
       </div>
+      <div class="card-history" id="card-history"></div>
       <div class="buy-row">
         <a class="btn btn-buy" href="${esc(buyUrl)}" target="_blank" rel="noopener">Buy on TCGplayer</a>
       </div>
     </div>
   `);
+  renderCardHistory("onepiece", card.card_set_id, document.getElementById("card-history"));
 }
 
 async function loadSet(setId) {
