@@ -1,7 +1,8 @@
 /* Pokémon browser — data: api.pokemontcg.io v2 (TCGplayer prices + Cardmarket averages). */
 
 const PK_API = "https://api.pokemontcg.io/v2";
-const PAGE_SIZE = 24;
+const SEARCH_PAGE_SIZE = 24;
+const SET_PAGE_SIZE = 250; // API max; load a whole set at once so sort is correct
 
 const setSelect = document.getElementById("set-select");
 const searchEl = document.getElementById("search");
@@ -98,15 +99,32 @@ async function loadPage(reset) {
       .replace(/[^\p{L}\p{N}\s.'-]/gu, " ")
       .replace(/\s+/g, " ")
       .trim();
-    const q = mode === "search" && clean
-      ? `name:"*${clean}*"`
-      : `set.id:${setSelect.value}`;
-    const order = mode === "search" ? "&orderBy=-set.releaseDate" : "";
-    const data = await pkFetch(
-      `/cards?q=${encodeURIComponent(q)}&page=${page}&pageSize=${PAGE_SIZE}${order}`
-    );
-    totalCount = data.totalCount;
-    cards = cards.concat(data.data);
+
+    if (mode === "search" && clean) {
+      // Search can match thousands of cards; keep it paginated.
+      const q = `name:"*${clean}*"`;
+      const data = await pkFetch(
+        `/cards?q=${encodeURIComponent(q)}&page=${page}&pageSize=${SEARCH_PAGE_SIZE}&orderBy=-set.releaseDate`
+      );
+      totalCount = data.totalCount;
+      cards = cards.concat(data.data);
+    } else {
+      // Set mode: load the WHOLE set up front so price-high→low and other
+      // sorts see every card (the chase cards aren't on the first page).
+      const q = `set.id:${setSelect.value}`;
+      let p = 1;
+      const all = [];
+      while (true) {
+        const data = await pkFetch(
+          `/cards?q=${encodeURIComponent(q)}&page=${p}&pageSize=${SET_PAGE_SIZE}`
+        );
+        totalCount = data.totalCount;
+        all.push(...data.data);
+        if (all.length >= totalCount || data.data.length === 0) break;
+        p += 1;
+      }
+      cards = all;
+    }
     statusEl.textContent = totalCount === 0 ? "No cards found." : "";
     render();
   } catch (err) {
