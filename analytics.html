@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Market Analytics — PokeSnipr</title>
+  <meta name="description" content="Set-value leaderboards, price trends, and the biggest movers across Pokémon and One Piece TCG markets." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="ticker-wrap" id="ticker-wrap" aria-label="Latest TCG news">
+    <div class="ticker" id="ticker">
+      <span class="ticker-item">Loading latest news…</span>
+    </div>
+  </div>
+
+  <header class="header">
+    <a class="logo" href="index.html">Poke<span>Snipr</span></a>
+    <nav class="nav">
+      <a href="index.html">Dashboard</a>
+      <a href="analytics.html" class="active">Markets</a>
+      <a href="pokemon.html">Pokémon</a>
+      <a href="onepiece.html">One Piece</a>
+      <a href="news.html">News</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero compact">
+      <h1>Market analytics</h1>
+      <p class="freshness" id="updated"></p>
+    </section>
+
+    <section class="tiles" id="tiles"></section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Set value leaderboard</h2>
+        <span class="badge">Sum of TCGplayer market prices, per set</span>
+      </div>
+      <p class="panel-sub">Total market value of every priced card in the most recent sets.</p>
+      <div class="chart-wrap tall"><canvas id="chart-setvalue"></canvas></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Set value over time</h2>
+        <span class="badge">Daily TCGplayer snapshots</span>
+      </div>
+      <p class="panel-sub" id="history-sub">Recorded once a day by the auto-refresh job — the chart gets richer every day.</p>
+      <div class="chart-wrap"><canvas id="chart-history"></canvas></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Pokémon set trend</h2>
+        <span class="badge">Cardmarket €, 30d → 7d → 1d avg</span>
+      </div>
+      <p class="panel-sub">Aggregate Cardmarket rolling averages per set — a falling line means the set is cooling, a rising one means it's heating up.</p>
+      <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2 id="movers-title">Biggest movers</h2>
+        <span class="badge" id="movers-badge"></span>
+      </div>
+      <p class="panel-sub" id="movers-sub"></p>
+      <div class="table-scroll">
+        <table class="data-table" id="movers-table">
+          <thead><tr><th>Card</th><th>Set</th><th>Before</th><th>Now</th><th>Change</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Set details</h2>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table" id="sets-table">
+          <thead><tr><th>Set</th><th>Game</th><th>Priced cards</th><th>Total value</th><th>Avg card</th><th>Top card</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="modal-root"></div>
+
+  <footer class="footer">
+    Prices: TCGplayer market via the Pokémon TCG API and OPTCG API, updated daily.
+    Cardmarket averages via the Pokémon TCG API. Prices are market estimates, not offers.
+  </footer>
+
+  <script src="js/common.js"></script>
+  <script src="js/analytics.js"></script>
+</body>
+</html>

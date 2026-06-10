@@ -34,6 +34,16 @@ function cardLi(card) {
       <span class="price">${usd(p)}</span>
       <span class="rarity">${esc(card.rarity ?? "—")}</span>
     </div>`;
+  const cleanName = card.card_name.replace(/\s*\([^)]*\)/g, "").trim();
+  li.appendChild(wlStarButton({
+    game: "onepiece",
+    id: card.card_set_id,
+    name: card.card_name,
+    image: card.card_image,
+    sub: `${card.set_name} · ${card.card_set_id}`,
+    buy: TCGP_SEARCH.onepiece(`${cleanName} ${card.card_set_id}`),
+    price: p,
+  }));
   li.addEventListener("click", () => openCard(card));
   return li;
 }

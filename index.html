@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PokeSnipr — Pokémon &amp; One Piece Market Tracker</title>
   <meta name="description" content="PokeSnipr tracks live Pokémon and One Piece TCG card prices, market movers, and news from PokeBeach, TCGplayer, and Pokémon Center." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PokeSnipr" />
+  <meta property="og:title" content="PokeSnipr — Pokémon &amp; One Piece Market Tracker" />
+  <meta property="og:description" content="Live card prices, market analytics, movers, watchlists, and TCG news in one place." />
+  <meta property="og:url" content="https://pokesnipr.com/" />
+  <meta name="theme-color" content="#0c0f1d" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://api.pokemontcg.io" />
   <link rel="preconnect" href="https://optcgapi.com" />
   <link rel="stylesheet" href="css/style.css" />
@@ -20,8 +27,10 @@
     <a class="logo" href="index.html">Poke<span>Snipr</span></a>
     <nav class="nav">
       <a href="index.html" class="active">Dashboard</a>
+      <a href="analytics.html">Markets</a>
       <a href="pokemon.html">Pokémon</a>
       <a href="onepiece.html">One Piece</a>
+      <a href="news.html">News</a>
     </nav>
   </header>
 
@@ -62,6 +71,15 @@
       <div class="row-scroll" id="op-featured"></div>
     </section>
 
+    <section class="panel" id="watchlist-panel" hidden>
+      <div class="panel-head">
+        <h2>Your watchlist</h2>
+        <span class="badge">Saved in this browser</span>
+      </div>
+      <p class="panel-sub">Star any card on the Pokémon or One Piece pages to track it here.</p>
+      <div id="watchlist"></div>
+    </section>
+
     <section class="panel sources">
       <h2>Data sources</h2>
       <ul>
@@ -81,6 +99,7 @@
   </footer>
 
   <script src="js/common.js"></script>
+  <script src="js/watchlist.js"></script>
   <script src="js/home.js"></script>
 </body>
 </html>

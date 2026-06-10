@@ -46,6 +46,15 @@ function cardLi(card) {
       <span class="price">${p ? usd(p.market ?? p.mid) : "—"}</span>
       <span class="rarity">${esc(card.rarity ?? "—")}</span>
     </div>`;
+  li.appendChild(wlStarButton({
+    game: "pokemon",
+    id: card.id,
+    name: card.name,
+    image: card.images.small,
+    sub: `${card.set.name} · #${card.number}`,
+    buy: card.tcgplayer?.url || TCGP_SEARCH.pokemon(`${card.name} ${card.set.name}`),
+    price: p ? (p.market ?? p.mid) : null,
+  }));
   li.addEventListener("click", () => openCard(card));
   return li;
 }

@@ -4,9 +4,12 @@ Pokémon & One Piece TCG market tracker — live at [pokesnipr.com](https://poke
 
 ## Pages
 
-- **Dashboard** (`index.html`) — news ticker, chase cards from the newest Pokémon and One Piece sets, biggest price movers
+- **Dashboard** (`index.html`) — news ticker, chase cards from the newest Pokémon and One Piece sets, biggest price movers, your watchlist
+- **Markets** (`analytics.html`) — set-value leaderboard, set value over time, Cardmarket trend chart, full movers table, set detail table (Chart.js)
 - **Pokémon** (`pokemon.html`) — every set, full-name search, TCGplayer market/low/high per print variant, Cardmarket 1/7/30-day averages, direct TCGplayer buy links
 - **One Piece** (`onepiece.html`) — every set OP-01 onward plus starter decks, TCGplayer market prices, buy links
+- **News** (`news.html`) — headline grid with per-source filters
+- **Watchlist** — star any card to track it on the dashboard (stored in your browser)
 
 ## Data sources
 

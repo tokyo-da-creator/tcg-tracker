@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TCG News — PokeSnipr</title>
+  <meta name="description" content="Latest Pokémon and One Piece TCG headlines from PokeBeach, TCGplayer, and Pokémon Center — refreshed every 6 hours." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="ticker-wrap" id="ticker-wrap" aria-label="Latest TCG news">
+    <div class="ticker" id="ticker">
+      <span class="ticker-item">Loading latest news…</span>
+    </div>
+  </div>
+
+  <header class="header">
+    <a class="logo" href="index.html">Poke<span>Snipr</span></a>
+    <nav class="nav">
+      <a href="index.html">Dashboard</a>
+      <a href="analytics.html">Markets</a>
+      <a href="pokemon.html">Pokémon</a>
+      <a href="onepiece.html">One Piece</a>
+      <a href="news.html" class="active">News</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero compact">
+      <h1>TCG news</h1>
+      <p class="freshness" id="updated"></p>
+    </section>
+
+    <section class="toolbar" id="news-filters">
+      <button class="chip active" data-source="">All sources</button>
+      <button class="chip" data-source="pokebeach">PokeBeach</button>
+      <button class="chip" data-source="tcgplayer">TCGplayer</button>
+      <button class="chip" data-source="pokemoncenter">Pokémon Center</button>
+    </section>
+
+    <section class="news-grid" id="news-grid"></section>
+    <p id="status" class="status"></p>
+  </main>
+
+  <footer class="footer">
+    Headlines aggregated via Google News from PokeBeach, TCGplayer, and Pokémon Center coverage.
+    Each link opens the original article.
+  </footer>
+
+  <script src="js/common.js"></script>
+  <script src="js/news.js"></script>
+</body>
+</html>

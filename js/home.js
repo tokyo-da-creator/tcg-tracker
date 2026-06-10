@@ -289,7 +289,33 @@ async function loadOnePiecePanel(cache) {
   }
 }
 
+/* ---------- Watchlist panel ---------- */
+function renderWatchlist() {
+  const panel = document.getElementById("watchlist-panel");
+  const box = document.getElementById("watchlist");
+  if (!panel || typeof wlAll !== "function") return;
+  const list = wlAll();
+  panel.hidden = list.length === 0;
+  box.innerHTML = list.map((w) => `
+    <div class="wl-row">
+      <img loading="lazy" src="${esc(w.image)}" alt="" />
+      <span class="m-name">${esc(w.name)}<small>${esc(w.sub)} · added ${esc(w.added)}</small></span>
+      <span class="price">${w.price != null ? usd(w.price) : "—"}</span>
+      <a class="btn btn-buy btn-sm" href="${esc(w.buy)}" target="_blank" rel="noopener">Buy</a>
+      <button class="wl-remove" data-game="${esc(w.game)}" data-id="${esc(w.id)}" aria-label="Remove">✕</button>
+    </div>`).join("");
+  box.querySelectorAll(".wl-remove").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      wlRemove(btn.dataset.game, btn.dataset.id);
+      renderWatchlist();
+    })
+  );
+}
+
+document.addEventListener("watchlist-changed", renderWatchlist);
+
 (async () => {
+  renderWatchlist();
   const cache = await loadFeaturedCache();
   loadPokemonPanels(cache);
   loadOnePiecePanel(cache);

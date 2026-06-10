@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Refresh data/news.json, data/price-history.json, and data/movers.json.
+"""PokeSnipr data refresh — runs on a schedule via GitHub Actions (stdlib only).
 
-Runs on a schedule via GitHub Actions (stdlib only, no pip installs).
-News comes from Google News RSS (PokeBeach / TCGplayer / Pokémon Center
-coverage). Prices are TCGplayer market values for the newest Pokémon and
-One Piece sets; one snapshot per day, movers computed from the last two
-distinct days.
+Outputs (all in data/):
+  news.json          headlines from PokeBeach / TCGplayer / Pokémon Center coverage
+  featured.json      top cards of the newest priced Pokémon + One Piece sets
+  price-history.json one snapshot per day of TCGplayer market prices, by set
+  movers.json        day-over-day TCGplayer movers (+ Cardmarket interim list)
+  analytics.json     set-level aggregates, trends, and value history for charts
+
+Prices are TCGplayer market values via the Pokémon TCG API and OPTCG API.
+Cardmarket 1/7/30-day averages (EUR) come from the Pokémon TCG API.
 """
 
 import json
@@ -23,6 +27,9 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 UA = {"User-Agent": "Mozilla/5.0 (PokeSnipr data updater; github actions)"}
 
+PK_API = "https://api.pokemontcg.io/v2"
+OP_API = "https://optcgapi.com/api"
+
 FEEDS = [
     ("pokebeach", "PokeBeach",
      "https://news.google.com/rss/search?q=site:pokebeach.com&hl=en-US&gl=US&ceid=US:en"),
@@ -32,8 +39,12 @@ FEEDS = [
      "https://news.google.com/rss/search?q=%22pokemon+center%22&hl=en-US&gl=US&ceid=US:en"),
 ]
 
-MAX_PER_FEED = 8
-MAX_SNAPSHOT_DAYS = 120
+MAX_PER_FEED = 12
+MAX_SNAPSHOT_DAYS = 180
+PK_SETS_TO_SCAN = 8     # newest Pokémon sets fetched for analytics
+OP_SETS_TO_SCAN = 6     # newest One Piece main sets fetched for analytics
+SETS_TO_SNAPSHOT = 2    # newest priced sets per game tracked day-over-day
+MOVERS_TOP_N = 20
 
 
 def get(url: str, retries: int = 2) -> bytes:
@@ -53,6 +64,8 @@ def get(url: str, retries: int = 2) -> bytes:
 def get_json(url: str):
     return json.loads(get(url))
 
+
+# ---------------------------------------------------------------- news
 
 def fetch_news() -> list[dict]:
     items = []
@@ -84,74 +97,181 @@ def fetch_news() -> list[dict]:
     return items
 
 
-def pokemon_snapshot():
-    """Newest set that already has TCGplayer market prices (brand-new sets
-    appear in the API days before TCGplayer publishes prices for them)."""
-    sets = get_json("https://api.pokemontcg.io/v2/sets?orderBy=-releaseDate&pageSize=5")
+# ---------------------------------------------------------------- cards
+
+def pk_best_market(card) -> float:
+    variants = ((card.get("tcgplayer") or {}).get("prices") or {}).values()
+    return max((v.get("market") or 0 for v in variants), default=0)
+
+
+def pk_card_meta(card) -> dict:
+    return {
+        "name": card["name"],
+        "image": card["images"]["small"],
+        "sub": f"{card['set']['name']} · #{card['number']}",
+        "buy": (card.get("tcgplayer") or {}).get("url")
+        or "https://www.tcgplayer.com/search/pokemon/product?q="
+        + urllib.parse.quote(card["name"]),
+    }
+
+
+def fetch_pokemon_sets():
+    """Newest sets with their full card lists: [(set_info, cards), …]."""
+    sets = get_json(f"{PK_API}/sets?orderBy=-releaseDate&pageSize={PK_SETS_TO_SCAN}")
+    out = []
     for s in sets["data"]:
         q = urllib.parse.quote(f"set.id:{s['id']}")
         cards = get_json(
-            "https://api.pokemontcg.io/v2/cards"
-            f"?q={q}&pageSize=250&select=id,name,number,rarity,images,set,tcgplayer"
+            f"{PK_API}/cards?q={q}&pageSize=250"
+            "&select=id,name,number,rarity,images,set,tcgplayer,cardmarket"
         )["data"]
-        prices, meta = {}, {}
-        for c in cards:
-            variants = ((c.get("tcgplayer") or {}).get("prices") or {}).values()
-            best = max((v.get("market") or 0 for v in variants), default=0)
-            if best > 0:
-                prices[c["id"]] = round(best, 2)
-                meta[c["id"]] = {
-                    "name": c["name"],
-                    "image": c["images"]["small"],
-                    "sub": f"{c['set']['name']} · #{c['number']}",
-                    "buy": (c.get("tcgplayer") or {}).get("url")
-                    or "https://www.tcgplayer.com/search/pokemon/product?q="
-                    + urllib.parse.quote(c["name"]),
-                }
-        if prices:
-            return {"name": s["name"], "id": s["id"],
-                    "releaseDate": s.get("releaseDate", "")}, prices, meta
-    raise RuntimeError("no recent Pokémon set has TCGplayer prices")
+        out.append((s, cards))
+    return out
 
 
-def onepiece_snapshot():
-    """Newest main OP set with TCGplayer market price per card."""
-    sets = get_json("https://optcgapi.com/api/allSets/")
-    main = [s for s in sets if s["set_id"].startswith("OP-")]
-    main.sort(key=lambda s: int(s["set_id"].split("-")[1]), reverse=True)
-    s = main[0]
-    cards = get_json(f"https://optcgapi.com/api/sets/{urllib.parse.quote(s['set_id'])}/")
-    prices, meta = {}, {}
-    for c in cards:
-        try:
-            p = float(c.get("market_price"))
-        except (TypeError, ValueError):
-            continue
-        cid = c["card_set_id"]
-        # Names embed suffixes like "(OP15-118) (Manga)" — strip for search.
-        clean = re.sub(r"\s*\([^)]*\)", "", c["card_name"]).strip()
-        prices[cid] = round(p, 2)
-        meta[cid] = {
-            "name": c["card_name"],
-            "image": c["card_image"],
-            "sub": f"{c['set_name']} · {cid}",
-            "buy": "https://www.tcgplayer.com/search/one-piece-card-game/product?q="
-            + urllib.parse.quote(f"{clean} {cid}"),
+def op_card_meta(card) -> dict:
+    cid = card["card_set_id"]
+    clean = re.sub(r"\s*\([^)]*\)", "", card["card_name"]).strip()
+    return {
+        "name": card["card_name"],
+        "image": card["card_image"],
+        "sub": f"{card['set_name']} · {cid}",
+        "buy": "https://www.tcgplayer.com/search/one-piece-card-game/product?q="
+        + urllib.parse.quote(f"{clean} {cid}"),
+    }
+
+
+def op_price(card):
+    try:
+        return float(card.get("market_price"))
+    except (TypeError, ValueError):
+        return None
+
+
+def fetch_onepiece_sets():
+    sets = get_json(f"{OP_API}/allSets/")
+    main = [s for s in sets if re.match(r"^OP-?\d+", s["set_id"])]
+    main.sort(key=lambda s: int(re.search(r"\d+", s["set_id"]).group()), reverse=True)
+    out = []
+    for s in main[:OP_SETS_TO_SCAN]:
+        cards = get_json(f"{OP_API}/sets/{urllib.parse.quote(s['set_id'])}/")
+        out.append((s, cards))
+    return out
+
+
+# ---------------------------------------------------------------- aggregates
+
+def pk_set_analytics(s, cards):
+    priced = [(c, pk_best_market(c)) for c in cards]
+    priced = [(c, p) for c, p in priced if p > 0]
+    if not priced:
+        return None
+    total = sum(p for _, p in priced)
+    top_card, top_price = max(priced, key=lambda x: x[1])
+    cm = [c.get("cardmarket", {}).get("prices") or {} for c, _ in priced]
+    cm = [p for p in cm if p.get("avg1") and p.get("avg7") and p.get("avg30")]
+    out = {
+        "id": s["id"],
+        "name": s["name"],
+        "releaseDate": s.get("releaseDate", ""),
+        "pricedCards": len(priced),
+        "totalValue": round(total, 2),
+        "avgValue": round(total / len(priced), 2),
+        "topCard": {"name": top_card["name"], "price": round(top_price, 2),
+                    "image": top_card["images"]["small"]},
+    }
+    # Cardmarket aggregate trend (only meaningful with broad coverage)
+    if len(cm) >= len(priced) * 0.5:
+        out["cardmarket"] = {
+            "coverage": len(cm),
+            "avg30": round(sum(p["avg30"] for p in cm), 2),
+            "avg7": round(sum(p["avg7"] for p in cm), 2),
+            "avg1": round(sum(p["avg1"] for p in cm), 2),
         }
-    return {"name": s["set_name"], "id": s["set_id"]}, prices, meta
+    return out
 
 
-def cardmarket_movers(top_n=9):
-    """Interim movers from Cardmarket 1-day vs 7-day averages (EUR), used
-    until two TCGplayer snapshots exist. The very newest sets often lack
-    Cardmarket data, so probe until one has it."""
-    sets = get_json("https://api.pokemontcg.io/v2/sets?orderBy=-releaseDate&pageSize=10")
-    for s in sets["data"]:
-        q = urllib.parse.quote(f"set.id:{s['id']}")
-        cards = get_json(
-            "https://api.pokemontcg.io/v2/cards"
-            f"?q={q}&pageSize=250&select=id,name,number,images,set,tcgplayer,cardmarket"
-        )["data"]
+def op_set_analytics(s, cards):
+    priced = [(c, op_price(c)) for c in cards]
+    priced = [(c, p) for c, p in priced if p]
+    if not priced:
+        return None
+    total = sum(p for _, p in priced)
+    top_card, top_price = max(priced, key=lambda x: x[1])
+    return {
+        "id": s["set_id"],
+        "name": s["set_name"],
+        "pricedCards": len(priced),
+        "totalValue": round(total, 2),
+        "avgValue": round(total / len(priced), 2),
+        "topCard": {"name": top_card["card_name"], "price": round(top_price, 2),
+                    "image": top_card["card_image"]},
+    }
+
+
+def featured_block(set_label, set_id, rows, release=""):
+    rows = sorted(rows, key=lambda r: r["price"], reverse=True)[:12]
+    info = {"name": set_label, "id": set_id}
+    if release:
+        info["releaseDate"] = release
+    return {"set": info, "cards": rows}
+
+
+# ---------------------------------------------------------------- history
+
+def update_history(pk_by_set, op_by_set):
+    """price-history.json — per-day, per-set card price maps."""
+    path = DATA / "price-history.json"
+    history = {"snapshots": []}
+    if path.exists():
+        try:
+            history = json.loads(path.read_text())
+        except Exception:
+            pass
+    # migrate/drop old flat-schema snapshots (pre set-keyed format)
+    history["snapshots"] = [
+        s for s in history.get("snapshots", [])
+        if isinstance(next(iter(s.get("pokemon", {"x": None}).values()), None), dict)
+    ]
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    snaps = [s for s in history["snapshots"] if s["date"] != today]
+    snaps.append({"date": today, "pokemon": pk_by_set, "onepiece": op_by_set})
+    snaps.sort(key=lambda s: s["date"])
+    history["snapshots"] = snaps[-MAX_SNAPSHOT_DAYS:]
+    path.write_text(json.dumps(history, separators=(",", ":")))
+    return history
+
+
+def compute_movers(history, meta, min_price=1.0):
+    snaps = history["snapshots"]
+    if len(snaps) < 2:
+        return {"ready": False, "pokemon": [], "onepiece": []}
+    prev, cur = snaps[-2], snaps[-1]
+
+    def movers_for(game):
+        out = []
+        prev_flat = {cid: p for sid in prev.get(game, {})
+                     for cid, p in prev[game][sid].items()}
+        for sid, cards in cur.get(game, {}).items():
+            for cid, new in cards.items():
+                old = prev_flat.get(cid)
+                if not old or old < min_price or cid not in meta[game]:
+                    continue
+                pct = (new - old) / old * 100
+                if abs(pct) < 0.5:
+                    continue
+                out.append({"id": cid, "old": old, "new": new,
+                            "pct": round(pct, 1), **meta[game][cid]})
+        out.sort(key=lambda m: abs(m["pct"]), reverse=True)
+        return out[:MOVERS_TOP_N]
+
+    return {"ready": True, "from": prev["date"], "to": cur["date"],
+            "pokemon": movers_for("pokemon"), "onepiece": movers_for("onepiece")}
+
+
+def cardmarket_movers(pk_sets, top_n=MOVERS_TOP_N):
+    """Interim movers from Cardmarket 1d vs 7d averages (EUR)."""
+    for s, cards in pk_sets:
         rows = []
         for c in cards:
             cm = (c.get("cardmarket") or {}).get("prices") or {}
@@ -161,18 +281,9 @@ def cardmarket_movers(top_n=9):
             pct = (a1 - a7) / a7 * 100
             if abs(pct) < 0.5:
                 continue
-            rows.append({
-                "id": c["id"],
-                "name": c["name"],
-                "image": c["images"]["small"],
-                "sub": f"{c['set']['name']} · #{c['number']}",
-                "buy": (c.get("tcgplayer") or {}).get("url")
-                or "https://www.tcgplayer.com/search/pokemon/product?q="
-                + urllib.parse.quote(c["name"]),
-                "old": round(a7, 2),
-                "new": round(a1, 2),
-                "pct": round(pct, 1),
-            })
+            rows.append({"id": c["id"], **pk_card_meta(c),
+                         "old": round(a7, 2), "new": round(a1, 2),
+                         "pct": round(pct, 1)})
         if rows:
             rows.sort(key=lambda r: abs(r["pct"]), reverse=True)
             return {"setName": s["name"], "currency": "EUR",
@@ -180,56 +291,19 @@ def cardmarket_movers(top_n=9):
     return None
 
 
-def featured_block(set_info, prices, meta, top_n=12):
-    top = sorted(prices.items(), key=lambda kv: kv[1], reverse=True)[:top_n]
-    return {
-        "set": set_info,
-        "cards": [{"id": cid, "price": price, **meta[cid]} for cid, price in top],
-    }
+def value_history(history):
+    """Per-day set total values, for the value-over-time chart."""
+    rows = []
+    for snap in history["snapshots"]:
+        row = {"date": snap["date"], "pokemon": {}, "onepiece": {}}
+        for game in ("pokemon", "onepiece"):
+            for sid, cards in snap.get(game, {}).items():
+                row[game][sid] = round(sum(cards.values()), 2)
+        rows.append(row)
+    return rows
 
 
-def update_history(pk, op):
-    path = DATA / "price-history.json"
-    history = {"snapshots": []}
-    if path.exists():
-        history = json.loads(path.read_text())
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    snaps = [s for s in history["snapshots"] if s["date"] != today]
-    snaps.append({"date": today, "pokemon": pk, "onepiece": op})
-    snaps.sort(key=lambda s: s["date"])
-    history["snapshots"] = snaps[-MAX_SNAPSHOT_DAYS:]
-    path.write_text(json.dumps(history, separators=(",", ":")))
-    return history
-
-
-def compute_movers(history, meta_pk, meta_op, min_price=1.0, top_n=9):
-    snaps = history["snapshots"]
-    if len(snaps) < 2:
-        return {"ready": False, "pokemon": [], "onepiece": []}
-    prev, cur = snaps[-2], snaps[-1]
-
-    def movers_for(game, meta):
-        out = []
-        for cid, new in cur[game].items():
-            old = prev[game].get(cid)
-            if not old or old < min_price or cid not in meta:
-                continue
-            pct = (new - old) / old * 100
-            if abs(pct) < 0.5:
-                continue
-            out.append({"id": cid, "old": old, "new": new,
-                        "pct": round(pct, 1), **meta[cid]})
-        out.sort(key=lambda m: abs(m["pct"]), reverse=True)
-        return out[:top_n]
-
-    return {
-        "ready": True,
-        "from": prev["date"],
-        "to": cur["date"],
-        "pokemon": movers_for("pokemon", meta_pk),
-        "onepiece": movers_for("onepiece", meta_op),
-    }
-
+# ---------------------------------------------------------------- main
 
 def main():
     DATA.mkdir(exist_ok=True)
@@ -242,30 +316,85 @@ def main():
     print(f"news: {len(news)} items")
 
     try:
-        pk_set, pk_prices, pk_meta = pokemon_snapshot()
-        op_set, op_prices, op_meta = onepiece_snapshot()
-        history = update_history(pk_prices, op_prices)
-        movers = compute_movers(history, pk_meta, op_meta)
+        pk_sets = fetch_pokemon_sets()
+        op_sets = fetch_onepiece_sets()
+
+        # --- per-set aggregates for analytics
+        pk_stats = [a for a in (pk_set_analytics(s, c) for s, c in pk_sets) if a]
+        op_stats = [a for a in (op_set_analytics(s, c) for s, c in op_sets) if a]
+
+        # --- snapshots: newest N priced sets per game
+        meta = {"pokemon": {}, "onepiece": {}}
+        pk_by_set, op_by_set = {}, {}
+        pk_priced = [(s, c) for s, c in pk_sets
+                     if any(pk_best_market(x) > 0 for x in c)]
+        for s, cards in pk_priced[:SETS_TO_SNAPSHOT]:
+            prices = {}
+            for c in cards:
+                p = pk_best_market(c)
+                if p > 0:
+                    prices[c["id"]] = round(p, 2)
+                    meta["pokemon"][c["id"]] = pk_card_meta(c)
+            pk_by_set[s["id"]] = prices
+        op_priced = [(s, c) for s, c in op_sets if any(op_price(x) for x in c)]
+        for s, cards in op_priced[:SETS_TO_SNAPSHOT]:
+            prices = {}
+            for c in cards:
+                p = op_price(c)
+                if p:
+                    prices[c["card_set_id"]] = round(p, 2)
+                    meta["onepiece"][c["card_set_id"]] = op_card_meta(c)
+            op_by_set[s["set_id"]] = prices
+
+        if not pk_by_set or not op_by_set:
+            raise RuntimeError("no priced sets found")
+
+        history = update_history(pk_by_set, op_by_set)
+
+        # --- featured: top cards of the newest priced set per game
+        pk_top_set, pk_top_cards = pk_priced[0]
+        op_top_set, op_top_cards = op_priced[0]
+        featured = {
+            "updated": now,
+            "pokemon": featured_block(
+                pk_top_set["name"], pk_top_set["id"],
+                [{"id": c["id"], "price": round(pk_best_market(c), 2), **pk_card_meta(c)}
+                 for c in pk_top_cards if pk_best_market(c) > 0],
+                pk_top_set.get("releaseDate", "")),
+            "onepiece": featured_block(
+                op_top_set["set_name"], op_top_set["set_id"],
+                [{"id": c["card_set_id"], "price": round(op_price(c), 2), **op_card_meta(c)}
+                 for c in op_top_cards if op_price(c)]),
+        }
+        (DATA / "featured.json").write_text(json.dumps(featured, ensure_ascii=False))
+
+        # --- movers
+        movers = compute_movers(history, meta)
         movers["updated"] = now
-        movers["sets"] = {"pokemon": pk_set["name"], "onepiece": op_set["name"]}
+        movers["sets"] = {"pokemon": pk_top_set["name"], "onepiece": op_top_set["set_name"]}
         if not movers["ready"]:
             try:
-                movers["interim"] = cardmarket_movers()
+                movers["interim"] = cardmarket_movers(pk_sets)
             except Exception as e:
                 print(f"warn: interim movers failed: {e}", file=sys.stderr)
                 movers["interim"] = None
         (DATA / "movers.json").write_text(json.dumps(movers, ensure_ascii=False))
-        featured = {
+
+        # --- analytics
+        analytics = {
             "updated": now,
-            "pokemon": featured_block(pk_set, pk_prices, pk_meta),
-            "onepiece": featured_block(op_set, op_prices, op_meta),
+            "pokemon": {"sets": pk_stats},
+            "onepiece": {"sets": op_stats},
+            "valueHistory": value_history(history),
         }
-        (DATA / "featured.json").write_text(json.dumps(featured, ensure_ascii=False))
-        print(f"prices: {pk_set['name']} {len(pk_prices)} cards / "
-              f"{op_set['name']} {len(op_prices)} cards / movers ready={movers['ready']}")
+        (DATA / "analytics.json").write_text(json.dumps(analytics, ensure_ascii=False))
+
+        print(f"prices: pk {list(pk_by_set)} / op {list(op_by_set)} "
+              f"/ movers ready={movers['ready']} "
+              f"/ analytics sets pk={len(pk_stats)} op={len(op_stats)}")
     except Exception as e:
         # News alone is still worth committing; price APIs can have bad days.
-        print(f"warn: price snapshot failed: {e}", file=sys.stderr)
+        print(f"warn: price/analytics refresh failed: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
