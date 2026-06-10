@@ -96,12 +96,17 @@ a { color: var(--accent-2); }
 }
 
 .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 1.45rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   color: var(--accent);
   text-decoration: none;
 }
+
+.logo-icon { width: 27px; height: 27px; }
 
 .logo span { color: var(--accent-2); }
 
