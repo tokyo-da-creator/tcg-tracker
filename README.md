@@ -1,6 +1,6 @@
-# TCG Pulse
+# PokeSnipr
 
-Pokémon & One Piece TCG market tracker — card prices, price changes, buy links, and a live news ticker. Plain HTML/CSS/JS; runs on GitHub Pages with no build step.
+Pokémon & One Piece TCG market tracker — live at [pokesnipr.com](https://pokesnipr.com) — card prices, price changes, buy links, and a live news ticker. Plain HTML/CSS/JS; runs on GitHub Pages with no build step.
 
 ## Pages
 

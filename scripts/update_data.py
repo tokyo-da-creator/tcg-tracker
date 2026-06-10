@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
-UA = {"User-Agent": "Mozilla/5.0 (TCGPulse data updater; github actions)"}
+UA = {"User-Agent": "Mozilla/5.0 (PokeSnipr data updater; github actions)"}
 
 FEEDS = [
     ("pokebeach", "PokeBeach",
