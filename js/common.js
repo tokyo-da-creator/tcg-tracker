@@ -48,6 +48,21 @@ function localMarketNote(source, updated) {
   return `<div class="note">Data shown in PokeSnipr from ${esc(source)}${updated ? ` · updated ${esc(updated)}` : ""}.</div>`;
 }
 
+function hiResImage(url) {
+  const s = String(url ?? "");
+  if (s.includes("images.pokemontcg.io") && s.endsWith(".png") && !s.endsWith("_hires.png")) {
+    return s.replace(/\.png$/, "_hires.png");
+  }
+  if (s.includes("tcgplayer-cdn.tcgplayer.com")) {
+    return s.replace(/_200w(?=\.jpg)/, "_in_1000x1000");
+  }
+  return s;
+}
+
+function joinList(xs) {
+  return Array.isArray(xs) && xs.length ? xs.join(", ") : null;
+}
+
 /* ---------- News ticker ----------
  * Primary source: data/news.json, refreshed by a scheduled GitHub Action.
  * Fallback: live Google News RSS through a public CORS proxy.

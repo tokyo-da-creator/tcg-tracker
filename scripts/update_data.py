@@ -29,6 +29,7 @@ UA = {"User-Agent": "Mozilla/5.0 (PokeSnipr data updater; github actions)"}
 
 PK_API = "https://api.pokemontcg.io/v2"
 OP_API = "https://optcgapi.com/api"
+TCGCSV = "https://tcgcsv.com/tcgplayer"
 
 FEEDS = [
     ("pokebeach", "PokeBeach",
@@ -45,6 +46,15 @@ PK_SETS_TO_SCAN = 8     # newest Pokémon sets fetched for analytics
 OP_SETS_TO_SCAN = 6     # newest One Piece main sets fetched for analytics
 SETS_TO_SNAPSHOT = 2    # newest priced sets per game tracked day-over-day
 MOVERS_TOP_N = 20
+SEALED_GROUPS_TO_SCAN = {"pokemon": 16, "onepiece": 18}
+SEALED_TOP_N = 160
+SEALED_PATTERNS = re.compile(
+    r"booster|elite trainer|\betb\b|bundle|box|pack|display|case|blister|tin|"
+    r"collection|premium|starter deck|deck set|double pack|gift|build & battle|"
+    r"battle deck|trainer toolkit|league battle|dash pack|release event",
+    re.I,
+)
+SEALED_EXCLUDE = re.compile(r"^code card|\bdon!! card \(|\bpromo card\b", re.I)
 
 
 def get(url: str, retries: int = 2) -> bytes:
@@ -125,11 +135,8 @@ def median(xs):
 def pk_card_meta(card) -> dict:
     return {
         "name": card["name"],
-        "image": card["images"]["small"],
+        "image": card["images"].get("large") or card["images"]["small"],
         "sub": f"{card['set']['name']} · #{card['number']}",
-        "buy": (card.get("tcgplayer") or {}).get("url")
-        or "https://www.tcgplayer.com/search/pokemon/product?q="
-        + urllib.parse.quote(card["name"]),
     }
 
 
@@ -149,13 +156,10 @@ def fetch_pokemon_sets():
 
 def op_card_meta(card) -> dict:
     cid = card["card_set_id"]
-    clean = re.sub(r"\s*\([^)]*\)", "", card["card_name"]).strip()
     return {
         "name": card["card_name"],
         "image": card["card_image"],
         "sub": f"{card['set_name']} · {cid}",
-        "buy": "https://www.tcgplayer.com/search/one-piece-card-game/product?q="
-        + urllib.parse.quote(f"{clean} {cid}"),
     }
 
 
@@ -211,8 +215,7 @@ def pk_set_analytics(s, cards):
             "cards": len(spreads),
             "tightest": [{"name": c["name"], "image": c["images"]["small"],
                           "market": round(p, 2), "low": round(lo, 2),
-                          "ratio": round(r, 2),
-                          "buy": (c.get("tcgplayer") or {}).get("url") or ""}
+                          "ratio": round(r, 2)}
                          for c, p, lo, r in tight],
         }
     # Cardmarket aggregate trend (only meaningful with broad coverage)
@@ -257,8 +260,7 @@ def op_set_analytics(s, cards):
             "cards": len(spreads),
             "tightest": [{"name": c["card_name"], "image": c["card_image"],
                           "market": round(p, 2), "low": round(inv, 2),
-                          "ratio": round(r, 2),
-                          "buy": op_card_meta(c)["buy"]}
+                          "ratio": round(r, 2)}
                          for c, p, inv, r in tight],
         }
     return out
@@ -344,6 +346,140 @@ def cardmarket_movers(pk_sets, top_n=MOVERS_TOP_N):
             return {"setName": s["name"], "currency": "EUR",
                     "basis": "Cardmarket 1d vs 7d avg", "pokemon": rows[:top_n]}
     return None
+
+
+# ---------------------------------------------------------------- sealed products
+
+def tcgcsv_json(path: str):
+    time.sleep(0.12)  # TCGCSV asks clients to avoid bursty pulls.
+    return get_json(f"{TCGCSV}{path}")
+
+
+def tcg_image_hi(url: str) -> str:
+    if not url:
+        return ""
+    return re.sub(r"_200w(?=\.jpg)", "_in_1000x1000", url)
+
+
+def ext_map(product: dict) -> dict:
+    out = {}
+    for row in product.get("extendedData") or []:
+        key = row.get("displayName") or row.get("name")
+        if key:
+            out[key] = row.get("value", "")
+    return out
+
+
+def sealed_type(name: str) -> str:
+    n = name.lower()
+    checks = [
+        ("Booster Box Case", "booster box case"),
+        ("Booster Box", "booster box"),
+        ("Elite Trainer Box", "elite trainer"),
+        ("Booster Bundle", "booster bundle"),
+        ("Build & Battle", "build & battle"),
+        ("Blister", "blister"),
+        ("Sleeved Booster", "sleeved booster"),
+        ("Booster Pack", "booster pack"),
+        ("Double Pack", "double pack"),
+        ("Starter Deck", "starter deck"),
+        ("Deck Set", "deck set"),
+        ("Display", "display"),
+        ("Case", "case"),
+        ("Tin", "tin"),
+        ("Collection", "collection"),
+        ("Premium", "premium"),
+        ("Gift", "gift"),
+        ("Dash Pack", "dash pack"),
+    ]
+    for label, needle in checks:
+        if needle in n:
+            return label
+    return "Sealed Product"
+
+
+def is_sealed_product(product: dict) -> bool:
+    name = product.get("name", "")
+    if SEALED_EXCLUDE.search(name):
+        return False
+    extended = ext_map(product)
+    # Singles usually expose card-specific fields. Sealed products expose
+    # product copy and packaging contents instead.
+    if extended.get("Rarity") and extended.get("Card Number"):
+        return False
+    return bool(SEALED_PATTERNS.search(name))
+
+
+def best_price(prices: list[dict]) -> dict:
+    normals = [p for p in prices if p.get("marketPrice") is not None
+               and str(p.get("subTypeName", "")).lower() in ("normal", "unopened")]
+    rows = normals or [p for p in prices if p.get("marketPrice") is not None]
+    if not rows:
+        return {}
+    return max(rows, key=lambda p: p.get("marketPrice") or 0)
+
+
+def fetch_sealed_products():
+    cats = {"pokemon": 3, "onepiece": 68}
+    labels = {"pokemon": "Pokémon", "onepiece": "One Piece"}
+    out = {"updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+           "source": "TCGCSV daily TCGplayer catalog export",
+           "pokemon": [], "onepiece": []}
+
+    for game, category_id in cats.items():
+        groups = tcgcsv_json(f"/{category_id}/groups")["results"]
+        groups.sort(key=lambda g: g.get("publishedOn") or "", reverse=True)
+        scanned = 0
+        for group in groups:
+            if scanned >= SEALED_GROUPS_TO_SCAN[game]:
+                break
+            products = tcgcsv_json(f"/{category_id}/{group['groupId']}/products")["results"]
+            prices_raw = tcgcsv_json(f"/{category_id}/{group['groupId']}/prices")["results"]
+            by_product = {}
+            for p in prices_raw:
+                by_product.setdefault(p["productId"], []).append(p)
+
+            added_group_item = False
+            for product in products:
+                if not is_sealed_product(product):
+                    continue
+                p = best_price(by_product.get(product["productId"], []))
+                if not p:
+                    continue
+                extended = ext_map(product)
+                out[game].append({
+                    "id": f"{category_id}-{product['productId']}",
+                    "productId": product["productId"],
+                    "game": labels[game],
+                    "gameKey": game,
+                    "name": product["name"],
+                    "cleanName": product.get("cleanName") or product["name"],
+                    "set": group["name"],
+                    "setId": group["groupId"],
+                    "abbreviation": group.get("abbreviation") or "",
+                    "releaseDate": (group.get("publishedOn") or "")[:10],
+                    "type": sealed_type(product["name"]),
+                    "image": tcg_image_hi(product.get("imageUrl") or ""),
+                    "imageThumb": product.get("imageUrl") or "",
+                    "market": p.get("marketPrice"),
+                    "low": p.get("lowPrice"),
+                    "mid": p.get("midPrice"),
+                    "high": p.get("highPrice"),
+                    "priceType": p.get("subTypeName") or "Normal",
+                    "modifiedOn": product.get("modifiedOn") or "",
+                    "presale": (product.get("presaleInfo") or {}).get("isPresale", False),
+                    "presaleNote": (product.get("presaleInfo") or {}).get("note") or "",
+                    "description": extended.get("Card Text") or extended.get("CardText") or "",
+                    "fields": extended,
+                })
+                added_group_item = True
+            if added_group_item:
+                scanned += 1
+
+    for game in ("pokemon", "onepiece"):
+        out[game].sort(key=lambda x: ((x.get("market") or 0), x.get("releaseDate", "")), reverse=True)
+        out[game] = out[game][:SEALED_TOP_N]
+    return out
 
 
 def value_history(history):
@@ -443,6 +579,13 @@ def main():
             "valueHistory": value_history(history),
         }
         (DATA / "analytics.json").write_text(json.dumps(analytics, ensure_ascii=False))
+
+        try:
+            sealed = fetch_sealed_products()
+            (DATA / "sealed.json").write_text(json.dumps(sealed, ensure_ascii=False))
+            print(f"sealed: pk={len(sealed['pokemon'])} op={len(sealed['onepiece'])}")
+        except Exception as e:
+            print(f"warn: sealed refresh failed: {e}", file=sys.stderr)
 
         print(f"prices: pk {list(pk_by_set)} / op {list(op_by_set)} "
               f"/ movers ready={movers['ready']} "

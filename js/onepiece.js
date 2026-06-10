@@ -27,14 +27,13 @@ function cardLi(card) {
   const li = document.createElement("li");
   li.className = `tcard ${rarityClass(`${card.rarity ?? ""} ${card.card_name ?? ""}`)}`.trim();
   li.innerHTML = `
-    <img loading="lazy" src="${esc(card.card_image)}" alt="${esc(card.card_name)}" />
+    <img loading="lazy" decoding="async" src="${esc(hiResImage(card.card_image))}" alt="${esc(card.card_name)}" />
     <div class="name">${esc(card.card_name)}</div>
     <div class="meta">${esc(card.set_name)} · ${esc(card.card_set_id)} · ${esc(card.card_color ?? "")}</div>
     <div class="pricebar">
       <span class="price">${usd(p)}</span>
       <span class="rarity">${esc(card.rarity ?? "—")}</span>
     </div>`;
-  const cleanName = card.card_name.replace(/\s*\([^)]*\)/g, "").trim();
   li.appendChild(wlStarButton({
     game: "onepiece",
     id: card.card_set_id,
@@ -82,6 +81,7 @@ function openCard(card) {
     detailStat("Rarity", card.rarity),
     detailStat("Type", card.card_type),
     detailStat("Color", card.card_color),
+    detailStat("Subtypes", card.sub_types),
     detailStat("Cost", card.card_cost),
     detailStat("Power", card.card_power),
     detailStat("Counter", card.counter_amount),
@@ -90,7 +90,7 @@ function openCard(card) {
   ].join("");
 
   openModal(`
-    <div><img class="art" src="${esc(card.card_image)}" alt="${esc(card.card_name)}" /></div>
+    <div><img class="art" src="${esc(hiResImage(card.card_image))}" alt="${esc(card.card_name)}" /></div>
     <div>
       <h2>${esc(card.card_name)}</h2>
       <div class="meta">

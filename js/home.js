@@ -21,7 +21,7 @@ function miniCard({ img, name, sub, priceText, onClick }) {
   const div = document.createElement("div");
   div.className = `mini-card ${rarityClass(`${name} ${sub}`)}`.trim();
   div.innerHTML = `
-    <img loading="lazy" src="${esc(img)}" alt="${esc(name)}" />
+    <img loading="lazy" decoding="async" src="${esc(hiResImage(img))}" alt="${esc(name)}" />
     <div class="name" title="${esc(name)}">${esc(name)}</div>
     <div class="price">${esc(priceText)}</div>
     <div class="meta" style="font-size:0.7rem;color:var(--muted)">${esc(sub)}</div>`;
@@ -33,7 +33,7 @@ function pkModal(card) {
   const p = pkBestPrice(card);
   const cm = card.cardmarket?.prices;
   openModal(`
-    <div><img class="art" src="${esc(card.images.large)}" alt="${esc(card.name)}" /></div>
+    <div><img class="art" src="${esc(hiResImage(card.images.large || card.images.small))}" alt="${esc(card.name)}" /></div>
     <div>
       <h2>${esc(card.name)}</h2>
       <div class="meta">${esc(card.set.name)} · #${esc(card.number)} · ${esc(card.rarity ?? "")}</div>
@@ -63,7 +63,7 @@ function pkModal(card) {
 
 function opModal(card) {
   openModal(`
-    <div><img class="art" src="${esc(card.card_image)}" alt="${esc(card.card_name)}" /></div>
+    <div><img class="art" src="${esc(hiResImage(card.card_image))}" alt="${esc(card.card_name)}" /></div>
     <div>
       <h2>${esc(card.card_name)}</h2>
       <div class="meta">${esc(card.set_name)} · ${esc(card.card_set_id)} · ${esc(card.rarity ?? "")}</div>
@@ -90,7 +90,7 @@ function opModal(card) {
 function cachedCardModal(card, game) {
   const isPokemon = game === "pokemon";
   openModal(`
-    <div><img class="art" src="${esc(card.image)}" alt="${esc(card.name)}" /></div>
+    <div><img class="art" src="${esc(hiResImage(card.image))}" alt="${esc(card.name)}" /></div>
     <div>
       <h2>${esc(card.name)}</h2>
       <div class="meta">${esc(card.sub ?? "")}</div>
@@ -181,6 +181,41 @@ async function loadFeaturedCache() {
   }
 }
 
+async function loadSealedCache() {
+  try {
+    const res = await fetch("data/sealed.json", { cache: "no-cache" });
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+function stripHtml(html) {
+  const doc = new DOMParser().parseFromString(String(html ?? ""), "text/html");
+  return doc.body.textContent.replace(/\s+/g, " ").trim();
+}
+
+function sealedModal(product) {
+  openModal(`
+    <div><img class="art sealed-art" src="${esc(hiResImage(product.image || product.imageThumb))}" alt="${esc(product.name)}" /></div>
+    <div>
+      <h2>${esc(product.name)}</h2>
+      <div class="meta">${esc(product.set)} · ${esc(product.type)}</div>
+      <div class="detail-grid">
+        ${detailStat("Game", product.game)}
+        ${detailStat("Product type", product.type)}
+        ${detailStat("Set", product.set)}
+        ${detailStat("Release", product.releaseDate)}
+        ${detailStat("Market", usd(product.market))}
+        ${detailStat("Low", usd(product.low))}
+        ${detailStat("Mid", usd(product.mid))}
+        ${detailStat("High", usd(product.high))}
+      </div>
+      ${product.description ? `<p class="card-text">${esc(stripHtml(product.description))}</p>` : ""}
+      ${localMarketNote("TCGCSV daily TCGplayer catalog export", product.modifiedOn?.slice(0, 10))}
+    </div>`);
+}
+
 function renderCachedRow(el, cards, game) {
   el.innerHTML = "";
   cards.forEach((c) =>
@@ -192,6 +227,28 @@ function renderCachedRow(el, cards, game) {
       onClick: () => cachedCardModal(c, game),
     }))
   );
+}
+
+function renderSealedRow(data) {
+  const label = document.getElementById("sealed-label");
+  const el = document.getElementById("sealed-featured");
+  if (!label || !el) return;
+  if (!data) {
+    label.textContent = "Sealed product data is being collected.";
+    return;
+  }
+  const rows = [...(data.pokemon ?? []), ...(data.onepiece ?? [])]
+    .sort((a, b) => (b.market ?? 0) - (a.market ?? 0))
+    .slice(0, 14);
+  label.textContent = `Cached ${rows.length} top products from ${data.source}.`;
+  el.innerHTML = "";
+  rows.forEach((p) => el.appendChild(miniCard({
+    img: p.image || p.imageThumb,
+    name: p.name,
+    sub: `${p.game} · ${p.type}`,
+    priceText: usd(p.market),
+    onClick: () => sealedModal(p),
+  })));
 }
 
 async function loadPokemonPanels(cache) {
@@ -362,6 +419,8 @@ document.addEventListener("watchlist-changed", renderWatchlist);
 (async () => {
   renderWatchlist();
   const cache = await loadFeaturedCache();
+  const sealed = await loadSealedCache();
   loadPokemonPanels(cache);
   loadOnePiecePanel(cache);
+  renderSealedRow(sealed);
 })();

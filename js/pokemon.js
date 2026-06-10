@@ -39,7 +39,7 @@ function cardLi(card) {
   const li = document.createElement("li");
   li.className = `tcard ${rarityClass(card.rarity)}`.trim();
   li.innerHTML = `
-    <img loading="lazy" src="${esc(card.images.small)}" alt="${esc(card.name)}" />
+    <img loading="lazy" decoding="async" src="${esc(hiResImage(card.images.large || card.images.small))}" alt="${esc(card.name)}" />
     <div class="name">${esc(card.name)}</div>
     <div class="meta">${esc(card.set.name)} · #${esc(card.number)}/${esc(card.set.printedTotal)}</div>
     <div class="pricebar">
@@ -139,10 +139,20 @@ function openCard(card) {
     detailStat("Number", `#${card.number}/${card.set?.printedTotal ?? "?"}`),
     detailStat("Rarity", card.rarity),
     detailStat("Artist", card.artist),
-    detailStat("Types", card.types?.join(", ")),
+    detailStat("Types", joinList(card.types)),
     detailStat("HP", card.hp),
-    detailStat("Stage", card.subtypes?.join(", ")),
+    detailStat("Stage", joinList(card.subtypes)),
+    detailStat("Supertype", card.supertype),
+    detailStat("Evolves from", card.evolvesFrom),
+    detailStat("Evolves to", joinList(card.evolvesTo)),
+    detailStat("Retreat", joinList(card.retreatCost)),
+    detailStat("Weakness", joinList((card.weaknesses ?? []).map((w) => `${w.type} ${w.value}`))),
+    detailStat("Resistance", joinList((card.resistances ?? []).map((r) => `${r.type} ${r.value}`))),
+    detailStat("Regulation", card.regulationMark),
+    detailStat("Legal", Object.entries(card.legalities ?? {}).map(([k, v]) => `${k}: ${v}`).join(", ")),
+    detailStat("Pokédex", joinList(card.nationalPokedexNumbers)),
     detailStat("Release", card.set?.releaseDate),
+    detailStat("Series", card.set?.series),
   ].join("");
 
   const rules = [
@@ -153,7 +163,7 @@ function openCard(card) {
   ].join("");
 
   openModal(`
-    <div><img class="art" src="${esc(card.images.large)}" alt="${esc(card.name)}" /></div>
+    <div><img class="art" src="${esc(hiResImage(card.images.large || card.images.small))}" alt="${esc(card.name)}" /></div>
     <div>
       <h2>${esc(card.name)}</h2>
       <div class="meta">

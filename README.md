@@ -1,11 +1,12 @@
 # PokeSnipr
 
-Pokémon & One Piece TCG market tracker — live at [pokesnipr.com](https://pokesnipr.com) — card prices, price changes, in-site card details, and a live news ticker. Plain HTML/CSS/JS; runs on GitHub Pages with no build step.
+Pokémon & One Piece TCG market tracker — live at [pokesnipr.com](https://pokesnipr.com) — card prices, sealed product prices, price changes, in-site details, and a live news ticker. Plain HTML/CSS/JS; runs on GitHub Pages with no build step.
 
 ## Pages
 
 - **Dashboard** (`index.html`) — news ticker, chase cards from the newest Pokémon and One Piece sets, biggest price movers, your watchlist
 - **Markets** (`analytics.html`) — set-value leaderboard, set value over time, Cardmarket trend chart, full movers table, set detail table (Chart.js)
+- **Sealed** (`sealed.html`) — booster boxes, booster packs, ETBs, bundles, tins, starter decks, displays, cases, and related sealed products
 - **Pokémon** (`pokemon.html`) — every set, full-name search, TCGplayer market/low/high per print variant, Cardmarket 1/7/30-day averages, and in-site card details
 - **One Piece** (`onepiece.html`) — every set OP-01 onward plus starter decks, TCGplayer market prices, and in-site card details
 - **News** (`news.html`) — headline grid with per-source filters
@@ -20,6 +21,7 @@ Pokémon & One Piece TCG market tracker — live at [pokesnipr.com](https://poke
 | One Piece cards & prices | TCGplayer prices via [OPTCG API](https://optcgapi.com) | updated daily |
 | News ticker | PokeBeach / TCGplayer / Pokémon Center coverage via Google News RSS | every 6 hours |
 | Day-over-day movers | Daily snapshots recorded by this repo's GitHub Action | ready after 2 days |
+| Sealed products | TCGCSV daily TCGplayer catalog export | updated every scheduled refresh |
 
 A scheduled GitHub Action ([update-data.yml](.github/workflows/update-data.yml)) refreshes `data/news.json` and records a daily price snapshot in `data/price-history.json`; once two days exist, `data/movers.json` powers true TCGplayer day-over-day movers on the dashboard. Until then the dashboard shows Cardmarket rolling-average moves (real historical data, in EUR).
 

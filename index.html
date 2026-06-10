@@ -16,7 +16,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preconnect" href="https://api.pokemontcg.io" />
   <link rel="preconnect" href="https://optcgapi.com" />
-  <link rel="stylesheet" href="css/style.css?v=20260610-mobile2" />
+  <link rel="stylesheet" href="css/style.css?v=20260610-sealed1" />
 </head>
 <body>
   <div class="ticker-wrap" id="ticker-wrap" aria-label="Latest TCG news">
@@ -30,6 +30,7 @@
     <nav class="nav">
       <a href="index.html" class="active">Dashboard</a>
       <a href="analytics.html">Markets</a>
+      <a href="sealed.html">Sealed</a>
       <a href="pokemon.html">Pokémon</a>
       <a href="onepiece.html">One Piece</a>
       <a href="news.html">News</a>
@@ -73,6 +74,15 @@
       <div class="row-scroll" id="op-featured"></div>
     </section>
 
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Sealed products — booster boxes, ETBs, packs, decks</h2>
+        <a class="more" href="sealed.html">Browse sealed →</a>
+      </div>
+      <p class="panel-sub" id="sealed-label">Loading sealed product market data…</p>
+      <div class="row-scroll sealed-row" id="sealed-featured"></div>
+    </section>
+
     <section class="panel" id="watchlist-panel" hidden>
       <div class="panel-head">
         <h2>Your watchlist</h2>
@@ -99,8 +109,8 @@
     One Piece is a trademark of Eiichiro Oda / Shueisha, Toei Animation, and Bandai.
   </footer>
 
-  <script src="js/common.js?v=20260610-mobile2"></script>
-  <script src="js/watchlist.js?v=20260610-mobile2"></script>
-  <script src="js/home.js?v=20260610-mobile2"></script>
+  <script src="js/common.js?v=20260610-sealed1"></script>
+  <script src="js/watchlist.js?v=20260610-sealed1"></script>
+  <script src="js/home.js?v=20260610-sealed1"></script>
 </body>
 </html>

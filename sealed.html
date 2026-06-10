@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sealed Products — PokeSnipr</title>
+  <meta name="description" content="Browse Pokémon and One Piece sealed products, including booster boxes, ETBs, packs, bundles, displays, cases, and decks." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/style.css?v=20260610-sealed1" />
+</head>
+<body>
+  <div class="ticker-wrap" id="ticker-wrap" aria-label="Latest TCG news">
+    <div class="ticker" id="ticker">
+      <span class="ticker-item">Loading latest news…</span>
+    </div>
+  </div>
+
+  <header class="header">
+    <a class="logo" href="index.html"><img class="logo-icon" src="favicon.svg" alt="" />Poke<span>Snipr</span></a>
+    <nav class="nav">
+      <a href="index.html">Dashboard</a>
+      <a href="analytics.html">Markets</a>
+      <a href="sealed.html" class="active">Sealed</a>
+      <a href="pokemon.html">Pokémon</a>
+      <a href="onepiece.html">One Piece</a>
+      <a href="news.html">News</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero compact">
+      <h1>Sealed products</h1>
+      <p class="freshness" id="sealed-updated"></p>
+    </section>
+
+    <section class="toolbar sealed-toolbar">
+      <select id="game-select" aria-label="Game">
+        <option value="all">Pokémon + One Piece</option>
+        <option value="pokemon">Pokémon</option>
+        <option value="onepiece">One Piece</option>
+      </select>
+      <select id="type-select" aria-label="Product type">
+        <option value="">All product types</option>
+      </select>
+      <input id="sealed-search" type="search" placeholder="Search booster boxes, ETBs, packs, decks…" autocomplete="off" />
+      <select id="sealed-sort" aria-label="Sort products">
+        <option value="market-desc">Market: high to low</option>
+        <option value="market-asc">Market: low to high</option>
+        <option value="release-desc">Newest release</option>
+        <option value="name">Name A-Z</option>
+      </select>
+    </section>
+
+    <p id="status" class="status"></p>
+    <section class="sealed-grid" id="sealed-grid"></section>
+  </main>
+
+  <div id="modal-root"></div>
+
+  <footer class="footer">
+    Sealed product catalog and market prices are cached into PokeSnipr from TCGCSV's daily TCGplayer export.
+  </footer>
+
+  <script src="js/common.js?v=20260610-sealed1"></script>
+  <script src="js/sealed.js?v=20260610-sealed1"></script>
+</body>
+</html>
