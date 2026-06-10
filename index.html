@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TCG Pulse — Pokémon &amp; One Piece Market Tracker</title>
+  <meta name="description" content="Live Pokémon and One Piece TCG card prices, market movers, and news from PokeBeach, TCGplayer, and Pokémon Center." />
+  <link rel="preconnect" href="https://api.pokemontcg.io" />
+  <link rel="preconnect" href="https://optcgapi.com" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="ticker-wrap" id="ticker-wrap" aria-label="Latest TCG news">
+    <div class="ticker" id="ticker">
+      <span class="ticker-item">Loading latest news from PokeBeach, TCGplayer, and Pokémon Center…</span>
+    </div>
+  </div>
+
+  <header class="header">
+    <a class="logo" href="index.html">TCG<span>Pulse</span></a>
+    <nav class="nav">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="pokemon.html">Pokémon</a>
+      <a href="onepiece.html">One Piece</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Pokémon &amp; One Piece card market, in one place</h1>
+      <p>
+        TCGplayer market prices, set browsers, and buy links — refreshed daily.
+        News headlines update automatically every few hours.
+      </p>
+      <p class="freshness" id="freshness"></p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Pokémon — chase cards in the newest set</h2>
+        <a class="more" href="pokemon.html">Browse all sets →</a>
+      </div>
+      <p class="panel-sub" id="pk-set-label">Loading…</p>
+      <div class="row-scroll" id="pk-featured"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Pokémon — biggest price moves</h2>
+        <span class="badge" title="Cardmarket 1-day vs 7-day average sale price">Cardmarket €, 1d vs 7d avg</span>
+      </div>
+      <p class="panel-sub">Computed from real Cardmarket rolling averages in the newest set. TCGplayer day-over-day moves appear here once the daily snapshot job has two days of data.</p>
+      <div class="movers" id="pk-movers"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>One Piece — top cards in the newest set</h2>
+        <a class="more" href="onepiece.html">Browse all sets →</a>
+      </div>
+      <p class="panel-sub" id="op-set-label">Loading…</p>
+      <div class="row-scroll" id="op-featured"></div>
+    </section>
+
+    <section class="panel sources">
+      <h2>Data sources</h2>
+      <ul>
+        <li><strong>Pokémon prices &amp; card data:</strong> TCGplayer market prices and Cardmarket averages via the <a href="https://pokemontcg.io" target="_blank" rel="noopener">Pokémon TCG API</a>, updated daily. Buy buttons link straight to each card's TCGplayer page.</li>
+        <li><strong>One Piece prices &amp; card data:</strong> TCGplayer market prices via <a href="https://optcgapi.com" target="_blank" rel="noopener">OPTCG API</a>, updated daily.</li>
+        <li><strong>News:</strong> headlines from PokeBeach, TCGplayer, and Pokémon Center coverage, refreshed automatically every 6 hours.</li>
+        <li><strong>More market analytics:</strong> <a href="https://mycollectrics.com" target="_blank" rel="noopener">Collectrics</a> — pack value and grading stats (no public data feed, so we link rather than embed).</li>
+      </ul>
+    </section>
+  </main>
+
+  <div id="modal-root"></div>
+
+  <footer class="footer">
+    Prices are market estimates, not offers. Pokémon is a trademark of Nintendo / Creatures / GAME FREAK.
+    One Piece is a trademark of Eiichiro Oda / Shueisha, Toei Animation, and Bandai.
+  </footer>
+
+  <script src="js/common.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>

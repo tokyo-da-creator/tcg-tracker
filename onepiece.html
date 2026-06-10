@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One Piece Cards &amp; Prices — TCG Pulse</title>
+  <meta name="description" content="Browse One Piece Card Game sets with TCGplayer market prices and buy links." />
+  <link rel="preconnect" href="https://optcgapi.com" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="theme-op">
+  <div class="ticker-wrap" id="ticker-wrap" aria-label="Latest TCG news">
+    <div class="ticker" id="ticker">
+      <span class="ticker-item">Loading latest news…</span>
+    </div>
+  </div>
+
+  <header class="header">
+    <a class="logo" href="index.html">TCG<span>Pulse</span></a>
+    <nav class="nav">
+      <a href="index.html">Dashboard</a>
+      <a href="pokemon.html">Pokémon</a>
+      <a href="onepiece.html" class="active">One Piece</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="toolbar">
+      <select id="set-select" aria-label="Choose a set"><option>Loading sets…</option></select>
+      <input id="search" type="search" placeholder="Filter cards in this set…" autocomplete="off" />
+      <select id="sort-select" aria-label="Sort cards">
+        <option value="price-desc">Price: high → low</option>
+        <option value="price-asc">Price: low → high</option>
+        <option value="number">Card number</option>
+        <option value="name">Name A–Z</option>
+      </select>
+    </section>
+
+    <p id="status" class="status"></p>
+    <p class="freshness" id="price-updated"></p>
+    <ul id="grid" class="grid cards"></ul>
+  </main>
+
+  <div id="modal-root"></div>
+
+  <footer class="footer">
+    Prices: TCGplayer market via OPTCG API, updated daily. Prices are market estimates, not offers.
+  </footer>
+
+  <script src="js/common.js"></script>
+  <script src="js/onepiece.js"></script>
+</body>
+</html>

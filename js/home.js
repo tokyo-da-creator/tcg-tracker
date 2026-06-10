@@ -1,0 +1,296 @@
+/* Dashboard — featured cards and movers for both games. */
+
+const PK_API = "https://api.pokemontcg.io/v2";
+const OP_API = "https://optcgapi.com/api";
+
+async function getJSON(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url} → ${res.status}`);
+  return res.json();
+}
+
+function pkBestPrice(card) {
+  const prices = card.tcgplayer?.prices;
+  if (!prices) return null;
+  const variants = Object.values(prices);
+  if (!variants.length) return null;
+  return variants.reduce((best, p) => ((p.market ?? 0) > (best.market ?? 0) ? p : best));
+}
+
+function miniCard({ img, name, sub, priceText, onClick }) {
+  const div = document.createElement("div");
+  div.className = "mini-card";
+  div.innerHTML = `
+    <img loading="lazy" src="${esc(img)}" alt="${esc(name)}" />
+    <div class="name" title="${esc(name)}">${esc(name)}</div>
+    <div class="price">${esc(priceText)}</div>
+    <div class="meta" style="font-size:0.7rem;color:var(--muted)">${esc(sub)}</div>`;
+  div.addEventListener("click", onClick);
+  return div;
+}
+
+function pkModal(card) {
+  const p = pkBestPrice(card);
+  const cm = card.cardmarket?.prices;
+  const buyUrl = card.tcgplayer?.url || TCGP_SEARCH.pokemon(`${card.name} ${card.set.name}`);
+  openModal(`
+    <div><img class="art" src="${esc(card.images.large)}" alt="${esc(card.name)}" /></div>
+    <div>
+      <h2>${esc(card.name)}</h2>
+      <div class="meta">${esc(card.set.name)} · #${esc(card.number)} · ${esc(card.rarity ?? "")}</div>
+      ${p ? `
+        <div class="trend-row">
+          <span class="t">TCGplayer market<b>${usd(p.market)}</b></span>
+          <span class="t">Low<b>${usd(p.low)}</b></span>
+          <span class="t">High<b>${usd(p.high)}</b></span>
+        </div>
+        <div class="note">Updated ${esc(card.tcgplayer?.updatedAt ?? "")} · TCGplayer via Pokémon TCG API</div>` : ""}
+      ${cm ? `
+        <div class="trend-row">
+          <span class="t">CM 1-day avg<b>${eur(cm.avg1)}</b></span>
+          <span class="t">CM 7-day avg<b>${eur(cm.avg7)}</b></span>
+          <span class="t">CM 30-day avg<b>${eur(cm.avg30)}</b></span>
+        </div>` : ""}
+      <div class="buy-row">
+        <a class="btn btn-buy" href="${esc(buyUrl)}" target="_blank" rel="noopener">Buy on TCGplayer</a>
+        <a class="btn btn-ghost" href="pokemon.html">Browse Pokémon sets</a>
+      </div>
+    </div>`);
+}
+
+function opModal(card) {
+  const cleanName = card.card_name.replace(/\s*\([^)]*\)/g, "").trim();
+  const buyUrl = TCGP_SEARCH.onepiece(`${cleanName} ${card.card_set_id}`);
+  openModal(`
+    <div><img class="art" src="${esc(card.card_image)}" alt="${esc(card.card_name)}" /></div>
+    <div>
+      <h2>${esc(card.card_name)}</h2>
+      <div class="meta">${esc(card.set_name)} · ${esc(card.card_set_id)} · ${esc(card.rarity ?? "")}</div>
+      <div class="trend-row">
+        <span class="t">TCGplayer market<b>${usd(parseFloat(card.market_price))}</b></span>
+        <span class="t">Listed (low)<b>${usd(parseFloat(card.inventory_price))}</b></span>
+      </div>
+      <div class="note">Updated ${esc(card.date_scraped ?? "")} · TCGplayer via OPTCG API</div>
+      <div class="buy-row">
+        <a class="btn btn-buy" href="${esc(buyUrl)}" target="_blank" rel="noopener">Buy on TCGplayer</a>
+        <a class="btn btn-ghost" href="onepiece.html">Browse One Piece sets</a>
+      </div>
+    </div>`);
+}
+
+/* TCGplayer day-over-day movers, cached by the scheduled GitHub Action.
+ * Until two daily snapshots exist, the dashboard falls back to Cardmarket
+ * rolling averages (also real historical data, just EUR). */
+async function loadSnapshotMovers() {
+  try {
+    const res = await fetch("data/movers.json", { cache: "no-cache" });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/* Renders movers.json (TCGplayer day-over-day when ready, otherwise the
+ * Action-computed Cardmarket interim list). Returns true if it rendered. */
+function renderSnapshotMovers(moversEl, data) {
+  const panel = moversEl.closest(".panel");
+  let items, fmt;
+  if (data.ready) {
+    items = [...data.pokemon, ...data.onepiece]
+      .sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct))
+      .slice(0, 12);
+    fmt = usd;
+    panel.querySelector(".badge").textContent = `TCGplayer $, ${data.from} → ${data.to}`;
+    panel.querySelector(".panel-sub").textContent =
+      "Day-over-day TCGplayer market price changes in the newest Pokémon and One Piece sets.";
+  } else if (data.interim?.pokemon?.length) {
+    items = data.interim.pokemon;
+    fmt = eur;
+    panel.querySelector(".badge").textContent = "Cardmarket €, 1d vs 7d avg";
+    panel.querySelector(".panel-sub").textContent =
+      `Cardmarket rolling-average moves in ${data.interim.setName}. ` +
+      "TCGplayer day-over-day moves appear once two daily snapshots exist.";
+  } else {
+    moversEl.innerHTML =
+      "<p class='panel-sub'>First price snapshot recorded today — day-over-day moves appear within 24 hours.</p>";
+    return true;
+  }
+
+  moversEl.innerHTML = items.length ? "" : "<p class='panel-sub'>No significant moves today.</p>";
+  items.forEach((m) => {
+    const div = document.createElement("div");
+    div.className = "mover";
+    div.innerHTML = `
+      <img loading="lazy" src="${esc(m.image)}" alt="${esc(m.name)}" />
+      <span class="m-name">${esc(m.name)}<small>${esc(m.sub)} · ${fmt(m.old)} → ${fmt(m.new)}</small></span>
+      <span class="delta ${m.pct >= 0 ? "up" : "down"}">${m.pct >= 0 ? "▲" : "▼"} ${Math.abs(m.pct).toFixed(1)}%</span>`;
+    div.addEventListener("click", () => window.open(m.buy, "_blank", "noopener"));
+    moversEl.appendChild(div);
+  });
+  return true;
+}
+
+/* Cached featured cards written by the GitHub Action — instant render,
+ * no API round-trips. */
+async function loadFeaturedCache() {
+  try {
+    const res = await fetch("data/featured.json", { cache: "no-cache" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.pokemon?.cards?.length && data.onepiece?.cards?.length ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function renderCachedRow(el, cards) {
+  el.innerHTML = "";
+  cards.forEach((c) =>
+    el.appendChild(miniCard({
+      img: c.image,
+      name: c.name,
+      sub: c.sub,
+      priceText: usd(c.price),
+      onClick: () => window.open(c.buy, "_blank", "noopener"),
+    }))
+  );
+}
+
+async function loadPokemonPanels(cache) {
+  const featuredEl = document.getElementById("pk-featured");
+  const moversEl = document.getElementById("pk-movers");
+  const label = document.getElementById("pk-set-label");
+  const moversData = await loadSnapshotMovers();
+  const moversRendered = moversData ? renderSnapshotMovers(moversEl, moversData) : false;
+
+  if (cache) {
+    const pk = cache.pokemon;
+    label.textContent = pk.set.releaseDate
+      ? `${pk.set.name} — released ${pk.set.releaseDate}`
+      : pk.set.name;
+    renderCachedRow(featuredEl, pk.cards);
+    document.getElementById("freshness").textContent =
+      `Prices cached ${cache.updated.slice(0, 10)} · refreshed automatically every 6 hours.`;
+    if (!moversRendered) {
+      moversEl.innerHTML =
+        "<p class='panel-sub'>Price-move data is being collected — check back soon.</p>";
+    }
+    return;
+  }
+
+  // No cached data (e.g. fresh clone before the Action has run): fall back to
+  // the live API. Brand-new sets can predate TCGplayer pricing, so probe.
+  try {
+    const sets = await getJSON(`${PK_API}/sets?orderBy=-releaseDate&pageSize=5`);
+    let set = null;
+    let cards = [];
+    for (const candidate of sets.data) {
+      const res = await getJSON(
+        `${PK_API}/cards?q=${encodeURIComponent(`set.id:${candidate.id}`)}&pageSize=250&select=id,name,number,rarity,images,set,tcgplayer,cardmarket`
+      );
+      if (res.data.some((c) => pkBestPrice(c)?.market)) {
+        set = candidate;
+        cards = res.data;
+        break;
+      }
+    }
+    if (!set) throw new Error("no recent set with prices");
+    label.textContent = `${set.name} — released ${set.releaseDate}`;
+
+    const byValue = [...cards]
+      .filter((c) => pkBestPrice(c)?.market)
+      .sort((a, b) => pkBestPrice(b).market - pkBestPrice(a).market)
+      .slice(0, 12);
+    featuredEl.innerHTML = "";
+    byValue.forEach((c) =>
+      featuredEl.appendChild(miniCard({
+        img: c.images.small,
+        name: c.name,
+        sub: `#${c.number} · ${c.rarity ?? ""}`,
+        priceText: usd(pkBestPrice(c).market),
+        onClick: () => pkModal(c),
+      }))
+    );
+
+    const updated = cards.find((c) => c.tcgplayer?.updatedAt)?.tcgplayer.updatedAt;
+    if (updated) {
+      document.getElementById("freshness").textContent =
+        `TCGplayer prices last updated ${updated}.`;
+    }
+
+    if (!moversRendered) renderCardmarketMovers(moversEl, cards);
+  } catch (err) {
+    label.textContent = "Pokémon data temporarily unavailable — please refresh.";
+    console.error(err);
+  }
+}
+
+function renderCardmarketMovers(moversEl, cards) {
+    const movers = cards
+      .map((c) => {
+        const cm = c.cardmarket?.prices;
+        if (!cm?.avg1 || !cm?.avg7 || cm.avg7 < 2) return null; // skip bulk noise
+        return { card: c, pct: ((cm.avg1 - cm.avg7) / cm.avg7) * 100, avg1: cm.avg1, avg7: cm.avg7 };
+      })
+      .filter(Boolean)
+      .sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct))
+      .slice(0, 9);
+
+    moversEl.innerHTML = movers.length ? "" : "<p class='panel-sub'>No significant moves today.</p>";
+    movers.forEach(({ card, pct, avg1, avg7 }) => {
+      const div = document.createElement("div");
+      div.className = "mover";
+      div.innerHTML = `
+        <img loading="lazy" src="${esc(card.images.small)}" alt="${esc(card.name)}" />
+        <span class="m-name">${esc(card.name)}<small>${eur(avg7)} → ${eur(avg1)}</small></span>
+        <span class="delta ${pct >= 0 ? "up" : "down"}">${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(1)}%</span>`;
+      div.addEventListener("click", () => pkModal(card));
+      moversEl.appendChild(div);
+    });
+}
+
+async function loadOnePiecePanel(cache) {
+  const featuredEl = document.getElementById("op-featured");
+  const label = document.getElementById("op-set-label");
+  if (cache) {
+    label.textContent = `${cache.onepiece.set.name} (${cache.onepiece.set.id})`;
+    renderCachedRow(featuredEl, cache.onepiece.cards);
+    return;
+  }
+  try {
+    const sets = await getJSON(`${OP_API}/allSets/`);
+    const main = sets
+      .filter((s) => /^OP-\d+/.test(s.set_id))
+      .sort((a, b) => parseInt(b.set_id.slice(3)) - parseInt(a.set_id.slice(3)));
+    const set = main[0];
+    label.textContent = `${set.set_name} (${set.set_id})`;
+
+    const cards = await getJSON(`${OP_API}/sets/${encodeURIComponent(set.set_id)}/`);
+    const top = cards
+      .map((c) => ({ c, p: parseFloat(c.market_price) }))
+      .filter((x) => !isNaN(x.p))
+      .sort((a, b) => b.p - a.p)
+      .slice(0, 12);
+
+    featuredEl.innerHTML = "";
+    top.forEach(({ c, p }) =>
+      featuredEl.appendChild(miniCard({
+        img: c.card_image,
+        name: c.card_name,
+        sub: `${c.card_set_id} · ${c.rarity ?? ""}`,
+        priceText: usd(p),
+        onClick: () => opModal(c),
+      }))
+    );
+  } catch (err) {
+    label.textContent = "One Piece data temporarily unavailable — please refresh.";
+    console.error(err);
+  }
+}
+
+(async () => {
+  const cache = await loadFeaturedCache();
+  loadPokemonPanels(cache);
+  loadOnePiecePanel(cache);
+})();
