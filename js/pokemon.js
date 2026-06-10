@@ -128,10 +128,10 @@ function openCard(card) {
   const cm = card.cardmarket?.prices;
   const trendHtml = cm ? `
     <div class="trend-row">
-      <span class="t">Cardmarket trend<b>${eur(cm.trendPrice)}</b></span>
-      <span class="t">1-day avg<b>${eur(cm.avg1)}</b></span>
-      <span class="t">7-day avg<b>${eur(cm.avg7)}</b></span>
-      <span class="t">30-day avg<b>${eur(cm.avg30)}</b></span>
+      <span class="t">Cardmarket trend<b>${eurUsd(cm.trendPrice)}</b></span>
+      <span class="t">1-day avg<b>${eurUsd(cm.avg1)}</b></span>
+      <span class="t">7-day avg<b>${eurUsd(cm.avg7)}</b></span>
+      <span class="t">30-day avg<b>${eurUsd(cm.avg30)}</b></span>
     </div>` : "";
 
   const detailRows = [

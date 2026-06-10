@@ -10,6 +10,26 @@ function eur(n) {
   return n.toLocaleString("en-US", { style: "currency", currency: "EUR" });
 }
 
+/* Live EUR->USD rate, refreshed from data/fx.json (written by the data job).
+ * Used for the handful of values fetched live from Cardmarket in EUR; all
+ * cached/server data is already converted to USD. */
+let EUR_USD = 1.08;
+(async () => {
+  try {
+    const res = await fetch("data/fx.json", { cache: "no-cache" });
+    if (res.ok) {
+      const fx = await res.json();
+      if (fx.eurUsd > 0.5 && fx.eurUsd < 3) EUR_USD = fx.eurUsd;
+    }
+  } catch { /* keep fallback rate */ }
+})();
+
+/* Format an EUR amount as USD using the live rate. */
+function eurUsd(n) {
+  if (n == null || isNaN(n)) return "—";
+  return usd(n * EUR_USD);
+}
+
 function debounce(fn, ms) {
   let t;
   return (...args) => {

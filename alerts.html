@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alerts &amp; Telegram — PokeSnipr</title>
+  <meta name="description" content="Configure PokeSnipr price, market-movement, and news alerts delivered to Telegram." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/style.css?v=20260610-usd1" />
+  <script src="js/auth.js?v=20260610-auth1"></script>
+</head>
+<body>
+  <div class="ticker-wrap" id="ticker-wrap" aria-label="Latest TCG news">
+    <div class="ticker" id="ticker"><span class="ticker-item">Loading latest news…</span></div>
+  </div>
+
+  <header class="header">
+    <a class="logo" href="index.html"><img class="logo-icon" src="favicon.svg" alt="" />Poke<span>Snipr</span></a>
+    <nav class="nav">
+      <a href="index.html">Dashboard</a>
+      <a href="analytics.html">Markets</a>
+      <a href="sealed.html">Sealed</a>
+      <a href="pokemon.html">Pokémon</a>
+      <a href="onepiece.html">One Piece</a>
+      <a href="news.html">News</a>
+      <a href="alerts.html" class="active">Alerts</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero compact">
+      <h1>Alerts &amp; Telegram</h1>
+      <p>Pick what you want to be notified about. PokeSnipr's data job checks every 6 hours and pushes matching alerts to your Telegram.</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>1 · Connect Telegram</h2><span class="badge" id="tg-status">Not connected</span></div>
+      <ol class="steps">
+        <li>In Telegram, open <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>, send <code>/newbot</code>, and follow the prompts. Copy the <b>bot token</b> it gives you.</li>
+        <li>Send any message to your new bot so it can reply to you.</li>
+        <li>Open <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a> and copy your numeric <b>chat ID</b>.</li>
+        <li>Paste both below. They're used only to build your setup — they're never committed to the site.</li>
+      </ol>
+      <div class="form-grid">
+        <input id="tg-token" type="text" placeholder="Bot token (123456:ABC-DEF…)" autocomplete="off" />
+        <input id="tg-chat" type="text" placeholder="Chat ID (e.g. 8123456789)" autocomplete="off" />
+        <button class="btn btn-buy" id="tg-test" type="button">Send test message</button>
+      </div>
+      <p class="note" id="tg-result"></p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>2 · Choose your alerts</h2></div>
+
+      <div class="alert-opt">
+        <label class="switch"><input type="checkbox" id="opt-movers" checked /> <span>Big price movers</span></label>
+        <p class="panel-sub">Notify when any tracked card moves at least
+          <input id="movers-pct" class="inline-num" type="number" min="1" max="90" value="15" />% day-over-day.</p>
+      </div>
+
+      <div class="alert-opt">
+        <label class="switch"><input type="checkbox" id="opt-sealed" checked /> <span>Sealed product moves</span></label>
+        <p class="panel-sub">Notify when a sealed product (booster box, ETB, bundle…) moves at least
+          <input id="sealed-pct" class="inline-num" type="number" min="1" max="90" value="10" />% since the last check.</p>
+      </div>
+
+      <div class="alert-opt">
+        <label class="switch"><input type="checkbox" id="opt-news" checked /> <span>TCG news</span></label>
+        <p class="panel-sub">Notify when new PokeBeach / TCGplayer / Pokémon Center headlines are published.</p>
+      </div>
+
+      <div class="alert-opt">
+        <label class="switch"><input type="checkbox" id="opt-watch" checked /> <span>Watchlist price triggers</span></label>
+        <p class="panel-sub">Notify when a watchlisted card crosses a price you set. Add triggers from your watchlist below.</p>
+        <div id="watch-triggers"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>3 · Activate</h2></div>
+      <p class="panel-sub">Your choices are saved in this browser instantly. To turn on Telegram delivery, the settings below need to live in the site repo. Copy this config and commit it to <code>config/alerts.json</code> (or send it to whoever manages the site) — then add your bot token and chat ID as the GitHub secrets <code>TELEGRAM_BOT_TOKEN</code> and <code>TELEGRAM_CHAT_ID</code>.</p>
+      <pre class="config-box" id="config-out"></pre>
+      <div class="buy-row">
+        <button class="btn btn-buy" id="copy-config" type="button">Copy config</button>
+        <button class="btn btn-ghost" id="download-config" type="button">Download alerts.json</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="modal-root"></div>
+
+  <footer class="footer">
+    Alerts run from PokeSnipr's scheduled data job. Telegram credentials live only in GitHub Actions secrets, never in the site.
+  </footer>
+
+  <script src="js/common.js?v=20260610-usd1"></script>
+  <script src="js/watchlist.js?v=20260610-usd1"></script>
+  <script src="js/alerts.js?v=20260610-auth1"></script>
+</body>
+</html>

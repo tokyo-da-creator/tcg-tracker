@@ -7,7 +7,8 @@
   <meta name="description" content="Set-value leaderboards, price trends, and the biggest movers across Pokémon and One Piece TCG markets." />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="stylesheet" href="css/style.css?v=20260610-sealed1" />
+  <link rel="stylesheet" href="css/style.css?v=20260610-usd1" />
+  <script src="js/auth.js?v=20260610-auth1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -26,6 +27,7 @@
       <a href="pokemon.html">Pokémon</a>
       <a href="onepiece.html">One Piece</a>
       <a href="news.html">News</a>
+      <a href="alerts.html">Alerts</a>
     </nav>
   </header>
 
@@ -58,7 +60,7 @@
     <section class="panel">
       <div class="panel-head">
         <h2>Pokémon set trend</h2>
-        <span class="badge">Cardmarket €, 30d → 7d → 1d avg</span>
+        <span class="badge">Cardmarket → USD, 30d → 7d → 1d avg</span>
       </div>
       <p class="panel-sub">Aggregate Cardmarket rolling averages per set — a falling line means the set is cooling, a rising one means it's heating up.</p>
       <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
@@ -118,7 +120,7 @@
     Cardmarket averages via the Pokémon TCG API. Prices are market estimates, not offers.
   </footer>
 
-  <script src="js/common.js?v=20260610-sealed1"></script>
-  <script src="js/analytics.js?v=20260610-sealed1"></script>
+  <script src="js/common.js?v=20260610-usd1"></script>
+  <script src="js/analytics.js?v=20260610-usd1"></script>
 </body>
 </html>

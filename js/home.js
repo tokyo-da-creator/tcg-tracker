@@ -54,9 +54,9 @@ function pkModal(card) {
         ${localMarketNote("Pokémon TCG API and TCGplayer market feeds", card.tcgplayer?.updatedAt)}` : ""}
       ${cm ? `
         <div class="trend-row">
-          <span class="t">CM 1-day avg<b>${eur(cm.avg1)}</b></span>
-          <span class="t">CM 7-day avg<b>${eur(cm.avg7)}</b></span>
-          <span class="t">CM 30-day avg<b>${eur(cm.avg30)}</b></span>
+          <span class="t">CM 1-day avg<b>${eurUsd(cm.avg1)}</b></span>
+          <span class="t">CM 7-day avg<b>${eurUsd(cm.avg7)}</b></span>
+          <span class="t">CM 30-day avg<b>${eurUsd(cm.avg30)}</b></span>
         </div>` : ""}
     </div>`);
 }
@@ -135,11 +135,11 @@ function renderSnapshotMovers(moversEl, data) {
     panel.querySelector(".panel-sub").textContent =
       "Day-over-day TCGplayer market price changes in the newest Pokémon and One Piece sets.";
   } else if (data.interim?.pokemon?.length) {
-    items = data.interim.pokemon.map((m) => ({ ...m, game: "pokemon", currency: "EUR" }));
-    fmt = eur;
-    panel.querySelector(".badge").textContent = "Cardmarket €, 1d vs 7d avg";
+    items = data.interim.pokemon.map((m) => ({ ...m, game: "pokemon", currency: "USD" }));
+    fmt = usd;
+    panel.querySelector(".badge").textContent = "Cardmarket → USD, 1d vs 7d avg";
     panel.querySelector(".panel-sub").textContent =
-      `Cardmarket rolling-average moves in ${data.interim.setName}. ` +
+      `Cardmarket rolling-average moves in ${data.interim.setName} (converted to USD). ` +
       "TCGplayer day-over-day moves appear once two daily snapshots exist.";
   } else {
     moversEl.innerHTML =
@@ -337,7 +337,7 @@ function renderCardmarketMovers(moversEl, cards) {
       div.className = "mover";
       div.innerHTML = `
         <img loading="lazy" src="${esc(card.images.small)}" alt="${esc(card.name)}" />
-        <span class="m-name">${esc(card.name)}<small>${eur(avg7)} → ${eur(avg1)}</small></span>
+        <span class="m-name">${esc(card.name)}<small>${eurUsd(avg7)} → ${eurUsd(avg1)}</small></span>
         <span class="delta ${pct >= 0 ? "up" : "down"}">${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(1)}%</span>`;
       div.addEventListener("click", () => pkModal(card));
       moversEl.appendChild(div);

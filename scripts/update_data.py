@@ -9,10 +9,15 @@ Outputs (all in data/):
   analytics.json     set-level aggregates, trends, and value history for charts
 
 Prices are TCGplayer market values via the Pokémon TCG API and OPTCG API.
-Cardmarket 1/7/30-day averages (EUR) come from the Pokémon TCG API.
+Cardmarket 1/7/30-day averages come from the Pokémon TCG API in EUR and are
+converted to USD with a live exchange rate so the whole site reads in USD.
+
+If TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set in the environment, alerts
+are sent to Telegram according to config/alerts.json.
 """
 
 import json
+import os
 import re
 import sys
 import time
@@ -25,11 +30,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
+CONFIG = ROOT / "config"
 UA = {"User-Agent": "Mozilla/5.0 (PokeSnipr data updater; github actions)"}
 
 PK_API = "https://api.pokemontcg.io/v2"
 OP_API = "https://optcgapi.com/api"
 TCGCSV = "https://tcgcsv.com/tcgplayer"
+FX_API = "https://open.er-api.com/v6/latest/EUR"
+
+# Live EUR->USD rate, refreshed each run (see fetch_eur_usd). Fallback is a
+# recent rate so a bad FX day still produces sane USD numbers.
+EUR_USD = 1.08
 
 FEEDS = [
     ("pokebeach", "PokeBeach",
@@ -73,6 +84,25 @@ def get(url: str, retries: int = 2) -> bytes:
 
 def get_json(url: str):
     return json.loads(get(url))
+
+
+def fetch_eur_usd() -> float:
+    """Live EUR->USD rate; falls back to the module default on failure."""
+    try:
+        data = get_json(FX_API)
+        rate = float(data["rates"]["USD"])
+        if 0.5 < rate < 3:
+            return rate
+    except Exception as e:
+        print(f"warn: FX rate fetch failed ({e}); using fallback {EUR_USD}", file=sys.stderr)
+    return EUR_USD
+
+
+def eur_to_usd(value):
+    """Convert an EUR amount to USD using the current run's rate."""
+    if value is None:
+        return None
+    return round(value * EUR_USD, 2)
 
 
 # ---------------------------------------------------------------- news
@@ -218,13 +248,16 @@ def pk_set_analytics(s, cards):
                           "ratio": round(r, 2)}
                          for c, p, lo, r in tight],
         }
-    # Cardmarket aggregate trend (only meaningful with broad coverage)
+    # Cardmarket aggregate trend (only meaningful with broad coverage).
+    # Cardmarket quotes EUR; convert to USD so the whole UI is one currency.
     if len(cm) >= len(priced) * 0.5:
         out["cardmarket"] = {
             "coverage": len(cm),
-            "avg30": round(sum(p["avg30"] for p in cm), 2),
-            "avg7": round(sum(p["avg7"] for p in cm), 2),
-            "avg1": round(sum(p["avg1"] for p in cm), 2),
+            "currency": "USD",
+            "convertedFrom": "EUR",
+            "avg30": eur_to_usd(sum(p["avg30"] for p in cm)),
+            "avg7": eur_to_usd(sum(p["avg7"] for p in cm)),
+            "avg1": eur_to_usd(sum(p["avg1"] for p in cm)),
         }
     return out
 
@@ -327,7 +360,7 @@ def compute_movers(history, meta, min_price=1.0):
 
 
 def cardmarket_movers(pk_sets, top_n=MOVERS_TOP_N):
-    """Interim movers from Cardmarket 1d vs 7d averages (EUR)."""
+    """Interim movers from Cardmarket 1d vs 7d averages, converted EUR->USD."""
     for s, cards in pk_sets:
         rows = []
         for c in cards:
@@ -339,11 +372,12 @@ def cardmarket_movers(pk_sets, top_n=MOVERS_TOP_N):
             if abs(pct) < 0.5:
                 continue
             rows.append({"id": c["id"], **pk_card_meta(c),
-                         "old": round(a7, 2), "new": round(a1, 2),
+                         "old": eur_to_usd(a7), "new": eur_to_usd(a1),
                          "pct": round(pct, 1)})
         if rows:
             rows.sort(key=lambda r: abs(r["pct"]), reverse=True)
-            return {"setName": s["name"], "currency": "EUR",
+            return {"setName": s["name"], "currency": "USD",
+                    "convertedFrom": "EUR",
                     "basis": "Cardmarket 1d vs 7d avg", "pokemon": rows[:top_n]}
     return None
 
@@ -494,11 +528,207 @@ def value_history(history):
     return rows
 
 
+# ---------------------------------------------------------------- telegram alerts
+
+DEFAULT_ALERTS = {
+    "movers": {"enabled": True, "minPct": 15},
+    "sealed": {"enabled": True, "minPct": 10},
+    "news": {"enabled": True},
+    "watchlist": {"enabled": True, "cards": []},
+}
+
+
+def load_alert_config() -> dict:
+    path = CONFIG / "alerts.json"
+    if path.exists():
+        try:
+            cfg = json.loads(path.read_text())
+            return {**DEFAULT_ALERTS, **cfg}
+        except Exception as e:
+            print(f"warn: alerts.json unreadable ({e}); using defaults", file=sys.stderr)
+    return DEFAULT_ALERTS
+
+
+def load_alert_state() -> dict:
+    path = DATA / "alert-state.json"
+    if path.exists():
+        try:
+            return json.loads(path.read_text())
+        except Exception:
+            pass
+    return {"newsSeen": [], "sealedPrices": {}, "moversSent": {}, "watchSent": {}}
+
+
+def save_alert_state(state: dict):
+    # keep the seen-news list bounded
+    state["newsSeen"] = state.get("newsSeen", [])[:400]
+    (DATA / "alert-state.json").write_text(json.dumps(state, ensure_ascii=False))
+
+
+def tg_send(token: str, chat_id: str, text: str) -> bool:
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = urllib.parse.urlencode({
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": "true",
+    }).encode()
+    try:
+        req = urllib.request.Request(url, data=payload, headers=UA)
+        with urllib.request.urlopen(req, timeout=30) as res:
+            return json.loads(res.read()).get("ok", False)
+    except Exception as e:
+        print(f"warn: telegram send failed: {e}", file=sys.stderr)
+        return False
+
+
+def build_alerts(cfg, state, movers, sealed, news, today):
+    """Returns a list of message strings to send, mutating state for dedup."""
+    msgs = []
+
+    # --- big movers (TCGplayer day-over-day, else Cardmarket interim) ---
+    mv = cfg.get("movers", {})
+    if mv.get("enabled"):
+        thresh = float(mv.get("minPct", 15))
+        if movers.get("ready"):
+            pool = ([dict(m, game="Pokémon") for m in movers.get("pokemon", [])]
+                    + [dict(m, game="One Piece") for m in movers.get("onepiece", [])])
+        else:
+            pool = [dict(m, game="Pokémon") for m in (movers.get("interim") or {}).get("pokemon", [])]
+        hits = [m for m in pool if abs(m.get("pct", 0)) >= thresh]
+        sent_today = set(state.get("moversSent", {}).get(today, []))
+        fresh = [m for m in hits if m["id"] not in sent_today]
+        if fresh:
+            fresh.sort(key=lambda m: abs(m["pct"]), reverse=True)
+            lines = ["📈 <b>Big market movers</b>"]
+            for m in fresh[:12]:
+                arrow = "🔺" if m["pct"] >= 0 else "🔻"
+                lines.append(f"{arrow} <b>{m['name']}</b> ({m['game']}) "
+                             f"${m['old']:.2f} → ${m['new']:.2f} ({m['pct']:+.1f}%)")
+            msgs.append("\n".join(lines))
+            state.setdefault("moversSent", {})[today] = list(
+                sent_today | {m["id"] for m in fresh})
+            # only keep today's dedup key
+            state["moversSent"] = {today: state["moversSent"][today]}
+
+    # --- sealed product moves (vs last recorded market price) ---
+    sl = cfg.get("sealed", {})
+    if sl.get("enabled") and sealed:
+        thresh = float(sl.get("minPct", 10))
+        last = state.get("sealedPrices", {})
+        new_last = {}
+        hits = []
+        for game in ("pokemon", "onepiece"):
+            for p in sealed.get(game, []):
+                mkt = p.get("market")
+                if mkt is None:
+                    continue
+                new_last[p["id"]] = round(mkt, 2)
+                prev = last.get(p["id"])
+                if prev and prev >= 5:
+                    pct = (mkt - prev) / prev * 100
+                    if abs(pct) >= thresh:
+                        hits.append((p, prev, mkt, pct))
+        if hits:
+            hits.sort(key=lambda x: abs(x[3]), reverse=True)
+            lines = ["📦 <b>Sealed product moves</b>"]
+            for p, prev, mkt, pct in hits[:10]:
+                arrow = "🔺" if pct >= 0 else "🔻"
+                lines.append(f"{arrow} <b>{p['name']}</b> ({p['set']}) "
+                             f"${prev:.2f} → ${mkt:.2f} ({pct:+.1f}%)")
+            msgs.append("\n".join(lines))
+        state["sealedPrices"] = new_last
+
+    # --- watchlist price triggers ---
+    wl = cfg.get("watchlist", {})
+    if wl.get("enabled") and wl.get("cards"):
+        # Look up current price from movers/sealed snapshots we already have.
+        price_index = {}
+        if movers.get("ready"):
+            for m in movers.get("pokemon", []) + movers.get("onepiece", []):
+                price_index[m["id"]] = m["new"]
+        for game in ("pokemon", "onepiece"):
+            for p in (sealed or {}).get(game, []):
+                if p.get("market") is not None:
+                    price_index[p["id"]] = p["market"]
+        watch_sent = state.get("watchSent", {})
+        new_watch_sent = dict(watch_sent)
+        lines = ["⭐ <b>Watchlist triggers</b>"]
+        triggered = False
+        for w in wl["cards"]:
+            cur = price_index.get(w.get("id"))
+            if cur is None:
+                continue
+            above, below = w.get("above"), w.get("below")
+            key = None
+            if above is not None and cur >= above:
+                key = f"{w['id']}:above:{above}"
+                cond = f"≥ ${above:.2f}"
+            elif below is not None and cur <= below:
+                key = f"{w['id']}:below:{below}"
+                cond = f"≤ ${below:.2f}"
+            if key and new_watch_sent.get(key) != today:
+                lines.append(f"• <b>{w.get('name', w['id'])}</b> hit {cond} (now ${cur:.2f})")
+                new_watch_sent[key] = today
+                triggered = True
+        if triggered:
+            msgs.append("\n".join(lines))
+        state["watchSent"] = new_watch_sent
+
+    # --- news ---
+    nw = cfg.get("news", {})
+    if nw.get("enabled") and news:
+        seen = set(state.get("newsSeen", []))
+        fresh = [n for n in news if n["link"] not in seen]
+        if fresh:
+            lines = ["📰 <b>New TCG headlines</b>"]
+            for n in fresh[:8]:
+                title = re.sub(r"\s+-\s+[^-]+$", "", n["title"])
+                lines.append(f"• [{n['sourceLabel']}] <a href=\"{n['link']}\">{title}</a>")
+            msgs.append("\n".join(lines))
+            state["newsSeen"] = [n["link"] for n in fresh] + state.get("newsSeen", [])
+
+    return msgs
+
+
+def run_alerts(movers, sealed, news):
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    cfg = load_alert_config()
+    state = load_alert_state()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    seeding = not (DATA / "alert-state.json").exists()
+    msgs = build_alerts(cfg, state, movers, sealed, news, today)
+
+    if not token or not chat_id:
+        print(f"alerts: telegram not configured; would send {len(msgs)} message(s)")
+        save_alert_state(state)
+        return
+    if seeding:
+        # First run only records baselines so we don't blast every headline /
+        # every sealed product on day one.
+        print("alerts: seeding baseline state (no messages on first run)")
+        save_alert_state(state)
+        return
+    sent = 0
+    for m in msgs:
+        if tg_send(token, chat_id, m):
+            sent += 1
+        time.sleep(0.5)
+    print(f"alerts: sent {sent}/{len(msgs)} telegram message(s)")
+    save_alert_state(state)
+
+
 # ---------------------------------------------------------------- main
 
 def main():
+    global EUR_USD
     DATA.mkdir(exist_ok=True)
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    EUR_USD = fetch_eur_usd()
+    (DATA / "fx.json").write_text(json.dumps(
+        {"eurUsd": EUR_USD, "updated": now, "base": "EUR", "quote": "USD"}))
+    print(f"fx: EUR->USD = {EUR_USD}")
 
     news = fetch_news()
     (DATA / "news.json").write_text(
@@ -580,6 +810,7 @@ def main():
         }
         (DATA / "analytics.json").write_text(json.dumps(analytics, ensure_ascii=False))
 
+        sealed = None
         try:
             sealed = fetch_sealed_products()
             (DATA / "sealed.json").write_text(json.dumps(sealed, ensure_ascii=False))
@@ -590,6 +821,12 @@ def main():
         print(f"prices: pk {list(pk_by_set)} / op {list(op_by_set)} "
               f"/ movers ready={movers['ready']} "
               f"/ analytics sets pk={len(pk_stats)} op={len(op_stats)}")
+
+        # Telegram alerts (no-op unless TELEGRAM_* env vars are set)
+        try:
+            run_alerts(movers, sealed, news)
+        except Exception as e:
+            print(f"warn: alerts failed: {e}", file=sys.stderr)
     except Exception as e:
         # News alone is still worth committing; price APIs can have bad days.
         print(f"warn: price/analytics refresh failed: {e}", file=sys.stderr)

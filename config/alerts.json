@@ -1,0 +1,9 @@
+{
+  "movers": { "enabled": true, "minPct": 15 },
+  "sealed": { "enabled": true, "minPct": 10 },
+  "news": { "enabled": true },
+  "watchlist": {
+    "enabled": true,
+    "cards": []
+  }
+}

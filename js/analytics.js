@@ -129,8 +129,8 @@ function renderTrendChart(analytics) {
     },
     options: {
       maintainAspectRatio: false,
-      plugins: { tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${eur(c.raw)}` } } },
-      scales: { y: { ticks: { callback: (v) => eur(v) } } },
+      plugins: { tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${usd(c.raw)}` } } },
+      scales: { y: { ticks: { callback: (v) => usd(v) } } },
     },
   });
 }
@@ -193,10 +193,10 @@ function renderMoversTable(movers) {
     badge.textContent = `TCGplayer $, ${movers.from} → ${movers.to}`;
     sub.textContent = "Day-over-day TCGplayer market price changes across tracked sets.";
   } else if (movers?.interim?.pokemon?.length) {
-    rows = movers.interim.pokemon.map((m) => ({ ...m, game: "Pokémon", currency: "EUR" }));
-    fmt = eur;
-    badge.textContent = "Cardmarket €, 1d vs 7d avg";
-    sub.textContent = `Cardmarket rolling-average moves in ${movers.interim.setName}. TCGplayer day-over-day moves appear once two daily snapshots exist.`;
+    rows = movers.interim.pokemon.map((m) => ({ ...m, game: "Pokémon", currency: "USD" }));
+    fmt = usd;
+    badge.textContent = "Cardmarket → USD, 1d vs 7d avg";
+    sub.textContent = `Cardmarket rolling-average moves in ${movers.interim.setName} (converted to USD). TCGplayer day-over-day moves appear once two daily snapshots exist.`;
   } else {
     sub.textContent = "First snapshot recorded today — movers appear within 24 hours.";
     return;
@@ -241,8 +241,8 @@ function openAnalyticsCard(card) {
         ${detailStat("Market", card.market != null ? usd(card.market) : null)}
         ${detailStat("Lowest listing", card.low != null ? usd(card.low) : null)}
         ${detailStat("Listing / market", card.ratio != null ? `${(card.ratio * 100).toFixed(0)}%` : null)}
-        ${detailStat("Previous", card.old != null ? (card.currency === "EUR" ? eur(card.old) : usd(card.old)) : null)}
-        ${detailStat("Current", card.new != null ? (card.currency === "EUR" ? eur(card.new) : usd(card.new)) : null)}
+        ${detailStat("Previous", card.old != null ? usd(card.old) : null)}
+        ${detailStat("Current", card.new != null ? usd(card.new) : null)}
         ${detailStat("Change", card.pct != null ? `${card.pct >= 0 ? "▲" : "▼"} ${Math.abs(card.pct).toFixed(1)}%` : null)}
       </div>
       ${localMarketNote("PokeSnipr analytics snapshots")}
