@@ -146,12 +146,18 @@ function renderSetStats(allCards) {
 
   if (!prices.length) { overviewEl.hidden = true; return; }
 
+  const coverage = priced.length / allCards.length;
+  const sparseWarning = coverage < 0.4
+    ? `<div class="sparse-warn">⚠ Only ${priced.length} of ${allCards.length} cards have price data — this set may be too new for full market coverage. Try a set released 4+ weeks ago for complete stats and signals.</div>`
+    : "";
+
   const total  = prices.reduce((s, v) => s + v, 0);
   const avg    = total / prices.length;
   const median = prices[Math.floor(prices.length / 2)];
   const topCard = priced.reduce((top, c) => sortPrice(c) > sortPrice(top) ? c : top);
 
   document.getElementById("set-tiles").innerHTML = `
+    ${sparseWarning}
     <div class="tile tile-anim">
       <div class="t-label">Set Total Value</div>
       <div class="t-value">${usd(total)}</div>
