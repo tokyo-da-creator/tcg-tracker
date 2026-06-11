@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pokémon Cards &amp; Prices — PokeSnipr</title>
-  <meta name="description" content="Browse Pokémon TCG sets with live TCGplayer market prices and in-site card details." />
+  <meta name="description" content="Browse Pokémon TCG sets with live TCGplayer market prices, buy signals, and in-depth market analytics." />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=2" />
   <link rel="manifest" href="site.webmanifest" />
@@ -12,8 +12,9 @@
   <meta name="apple-mobile-web-app-title" content="PokeSnipr" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="preconnect" href="https://api.pokemontcg.io" />
-  <link rel="stylesheet" href="css/style.css?v=20260610-usd2" />
+  <link rel="stylesheet" href="css/style.css?v=20260611-pk1" />
   <script src="js/auth.js?v=20260611-auth2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
   <div class="ticker-wrap" id="ticker-wrap" aria-label="Latest TCG news">
@@ -49,6 +50,34 @@
 
     <p id="status" class="status"></p>
     <p class="freshness" id="price-updated"></p>
+
+    <!-- Set overview: stat tiles + price distribution -->
+    <section id="set-overview" hidden>
+      <div class="tiles" id="set-tiles"></div>
+      <div class="panel dist-panel">
+        <div class="dist-label">Price Distribution</div>
+        <div class="dist-bars" id="dist-bars"></div>
+      </div>
+    </section>
+
+    <!-- Insights: buy signals + best bang for buck -->
+    <section id="insights" hidden>
+      <div class="panel insight-panel">
+        <div class="panel-head">
+          <h2>Buy Signals <span class="badge" id="signals-badge"></span></h2>
+        </div>
+        <p class="panel-sub">Cards showing supply pressure or cross-market opportunity</p>
+        <div class="insights-scroll" id="buy-signals-list"></div>
+      </div>
+      <div class="panel insight-panel">
+        <div class="panel-head">
+          <h2>Best Bang for Buck</h2>
+        </div>
+        <p class="panel-sub">High rarity, attractive price point — undervalued relative to tier</p>
+        <div class="insights-scroll" id="bang-list"></div>
+      </div>
+    </section>
+
     <ul id="grid" class="grid cards"></ul>
     <button id="load-more" class="load-more" hidden>Load more</button>
   </main>
@@ -59,8 +88,8 @@
     Prices: TCGplayer market via the Pokémon TCG API, updated daily. Prices are market estimates, not offers.
   </footer>
 
-  <script src="js/common.js?v=20260610-usd2"></script>
-  <script src="js/watchlist.js?v=20260610-usd2"></script>
-  <script src="js/pokemon.js?v=20260610-usd2"></script>
+  <script src="js/common.js?v=20260611-pk1"></script>
+  <script src="js/watchlist.js?v=20260611-pk1"></script>
+  <script src="js/pokemon.js?v=20260611-pk1"></script>
 </body>
 </html>
