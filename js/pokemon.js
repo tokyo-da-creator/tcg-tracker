@@ -4,19 +4,24 @@ const PK_API = "https://api.pokemontcg.io/v2";
 const SEARCH_PAGE_SIZE = 24;
 const SET_PAGE_SIZE = 250;
 
-const setSelect   = document.getElementById("set-select");
-const searchEl    = document.getElementById("search");
-const sortSelect  = document.getElementById("sort-select");
-const grid        = document.getElementById("grid");
-const statusEl    = document.getElementById("status");
-const updatedEl   = document.getElementById("price-updated");
-const loadMoreBtn = document.getElementById("load-more");
+const setSelect      = document.getElementById("set-select");
+const searchEl       = document.getElementById("search");
+const sortSelect     = document.getElementById("sort-select");
+const grid           = document.getElementById("grid");
+const statusEl       = document.getElementById("status");
+const updatedEl      = document.getElementById("price-updated");
+const loadMoreBtn    = document.getElementById("load-more");
+const cardTableWrap  = document.getElementById("card-table-wrap");
+const cardTableBody  = document.getElementById("card-table-body");
+const btnGrid        = document.getElementById("btn-grid");
+const btnTable       = document.getElementById("btn-table");
 
 let mode = "set";
 let page = 1;
 let totalCount = 0;
 let cards = [];
 let setValueChart = null;
+let viewMode = "grid";
 
 async function pkFetch(path) {
   const res = await fetch(`${PK_API}${path}`);
@@ -133,42 +138,76 @@ function cardLi(card) {
   return li;
 }
 
-/* ---------- Grid render ---------- */
-function render() {
-  grid.innerHTML = "";
+/* ---------- Shared sort logic ---------- */
+function getSortedCards() {
   const sorted = [...cards];
   const sort = sortSelect.value;
-
   if (sort === "price-desc" || sort === "price-asc") {
     sorted.sort((a, b) => {
-      const pa = sortPrice(a);
-      const pb = sortPrice(b);
-      const hasPriceA = pa >= 0;
-      const hasPriceB = pb >= 0;
-
-      if (hasPriceA && hasPriceB) {
-        return sort === "price-desc" ? pb - pa : pa - pb;
-      }
-      // Both unpriced: sort by rarity as a value proxy
-      if (!hasPriceA && !hasPriceB) {
+      const pa = sortPrice(a), pb = sortPrice(b);
+      const ha = pa >= 0, hb = pb >= 0;
+      if (ha && hb) return sort === "price-desc" ? pb - pa : pa - pb;
+      if (!ha && !hb) {
         const ra = rarityTier(a), rb = rarityTier(b);
         return sort === "price-desc" ? rb - ra : ra - rb;
       }
-      // One priced, one not: priced cards always appear first
-      return hasPriceA ? -1 : 1;
+      return ha ? -1 : 1;
     });
   } else if (sort === "number") {
     sorted.sort((a, b) => (parseInt(a.number) || 0) - (parseInt(b.number) || 0));
   } else if (sort === "name") {
     sorted.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
   }
+  return sorted;
+}
 
-  sorted.forEach((c, i) => {
-    const li = cardLi(c);
-    li.style.animationDelay = `${Math.min(i, 40) * 25}ms`;
-    li.classList.add("card-enter");
-    grid.appendChild(li);
-  });
+/* ---------- Table view render ---------- */
+function renderTable(sorted) {
+  const dBadge = v => v == null
+    ? `<span class="muted">—</span>`
+    : `<span class="delta-mini ${v >= 0 ? "up" : "down"}">${v >= 0 ? "▲" : "▼"} ${Math.abs(v).toFixed(1)}%</span>`;
+
+  cardTableBody.innerHTML = sorted.map(card => {
+    const p = bestPrice(card);
+    const displayPrice = p ? (p.market ?? p.mid ?? p.low ?? p.high) : null;
+    const cm = card.cardmarket?.prices;
+    const d7  = (cm?.avg1 && cm?.avg7  && cm.avg7  > 0) ? ((cm.avg1 - cm.avg7)  / cm.avg7  * 100) : null;
+    const d30 = (cm?.avg1 && cm?.avg30 && cm.avg30 > 0) ? ((cm.avg1 - cm.avg30) / cm.avg30 * 100) : null;
+    return `<tr class="ct-row" data-id="${esc(card.id)}">
+      <td class="ct-img"><img loading="lazy" src="${esc(card.images.small)}" alt="" /></td>
+      <td class="ct-name">${esc(card.name)}</td>
+      <td class="ct-num">#${esc(card.number)}</td>
+      <td><span class="rarity">${esc(card.rarity ?? "—")}</span></td>
+      <td class="ct-price">${displayPrice != null ? `<b>${usd(displayPrice)}</b>` : `<span class="muted">—</span>`}</td>
+      <td>${cm?.avg7 ? eurUsd(cm.avg7) : `<span class="muted">—</span>`}</td>
+      <td>${dBadge(d7)}</td>
+      <td>${dBadge(d30)}</td>
+    </tr>`;
+  }).join("");
+
+  cardTableBody.querySelectorAll(".ct-row").forEach((row, i) =>
+    row.addEventListener("click", () => openCard(sorted[i])));
+}
+
+/* ---------- Grid render ---------- */
+function render() {
+  const sorted = getSortedCards();
+
+  if (viewMode === "table") {
+    grid.hidden = true;
+    cardTableWrap.hidden = false;
+    renderTable(sorted);
+  } else {
+    grid.hidden = false;
+    cardTableWrap.hidden = true;
+    grid.innerHTML = "";
+    sorted.forEach((c, i) => {
+      const li = cardLi(c);
+      li.style.animationDelay = `${Math.min(i, 40) * 25}ms`;
+      li.classList.add("card-enter");
+      grid.appendChild(li);
+    });
+  }
 
   loadMoreBtn.hidden = mode === "set" || cards.length >= totalCount;
 
@@ -829,5 +868,19 @@ searchEl.addEventListener("input", debounce(() => {
 
 sortSelect.addEventListener("change", render);
 loadMoreBtn.addEventListener("click", () => { page += 1; loadPage(false); });
+
+if (btnGrid) btnGrid.addEventListener("click", () => {
+  viewMode = "grid";
+  btnGrid.classList.add("active"); btnGrid.setAttribute("aria-pressed", "true");
+  btnTable.classList.remove("active"); btnTable.setAttribute("aria-pressed", "false");
+  render();
+});
+
+if (btnTable) btnTable.addEventListener("click", () => {
+  viewMode = "table";
+  btnTable.classList.add("active"); btnTable.setAttribute("aria-pressed", "true");
+  btnGrid.classList.remove("active"); btnGrid.setAttribute("aria-pressed", "false");
+  render();
+});
 
 init();

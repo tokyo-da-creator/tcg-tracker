@@ -1320,3 +1320,150 @@ main {
 }
 .delta-mini.up   { background: rgba(61,220,132,0.18); color: var(--up); }
 .delta-mini.down { background: rgba(255,93,93,0.18);  color: var(--down); }
+
+/* ========================================================
+   NEW FEATURES — MARKET STATS / TABLE VIEW / GROWTH CHART
+   ======================================================== */
+
+/* ---------- Tile inline delta badge ---------- */
+.tile-delta {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 800;
+  border-radius: 4px;
+  padding: 0.07rem 0.26rem;
+  vertical-align: 2px;
+  margin-left: 3px;
+}
+.tile-delta.up   { background: rgba(61,220,132,0.18); color: var(--up); }
+.tile-delta.down { background: rgba(255,93,93,0.18);  color: var(--down); }
+
+/* ---------- Market stats bar on dashboard ---------- */
+.market-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.7rem 1.1rem;
+  margin-bottom: 0.5rem;
+}
+.ms-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ms-label {
+  font-size: 0.63rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ms-val {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ms-delta {
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+.ms-delta.up   { color: var(--up); }
+.ms-delta.down { color: var(--down); }
+.ms-sep {
+  color: var(--line);
+  font-size: 1rem;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+.ms-link {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent-2);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ms-link:hover { color: var(--accent); }
+
+@media (max-width: 600px) {
+  .ms-sep { display: none; }
+  .market-stats { gap: 0.6rem 1rem; }
+  .ms-link { margin-left: 0; }
+}
+
+/* ---------- View toggle (Grid / Table) ---------- */
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.vtbtn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 0.38rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  transition: background 0.13s, color 0.13s;
+}
+.vtbtn.active {
+  background: var(--accent-2);
+  color: #fff;
+}
+.vtbtn:not(.active):hover {
+  background: rgba(42, 49, 88, 0.55);
+  color: var(--text);
+}
+
+/* ---------- Card table view ---------- */
+.card-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+}
+.card-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+.card-table th {
+  text-align: left;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.45rem 0.65rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.ct-row {
+  border-bottom: 1px solid rgba(42, 49, 88, 0.4);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.ct-row:hover { background: var(--card-hover); }
+.ct-row td { padding: 0.3rem 0.65rem; vertical-align: middle; }
+.ct-img { width: 40px; }
+.ct-img img { width: 36px; height: auto; border-radius: 3px; display: block; }
+.ct-name { font-weight: 600; max-width: 200px; }
+.ct-num { color: var(--muted); white-space: nowrap; font-size: 0.78rem; }
+.ct-price { font-weight: 800; color: var(--accent); white-space: nowrap; }
+
+@media (max-width: 600px) {
+  .ct-num, .card-table th:nth-child(3) { display: none; }
+}
+
+/* ---------- Muted helper ---------- */
+.muted { color: var(--muted); }

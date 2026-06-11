@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="PokeSnipr" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="preconnect" href="https://api.pokemontcg.io" />
-  <link rel="stylesheet" href="css/style.css?v=20260611-pk5" />
+  <link rel="stylesheet" href="css/style.css?v=20260611-pk6" />
   <script src="js/auth.js?v=20260611-auth2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 </head>
@@ -46,6 +46,10 @@
         <option value="number">Card number</option>
         <option value="name">Name A–Z</option>
       </select>
+      <div class="view-toggle" role="group" aria-label="View mode">
+        <button class="vtbtn active" id="btn-grid" aria-pressed="true" title="Grid view">⊞</button>
+        <button class="vtbtn" id="btn-table" aria-pressed="false" title="Table view">≡</button>
+      </div>
     </section>
 
     <p id="status" class="status"></p>
@@ -97,6 +101,23 @@
     </section>
 
     <ul id="grid" class="grid cards"></ul>
+    <div id="card-table-wrap" class="card-table-wrap" hidden>
+      <table class="card-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Name</th>
+            <th>#</th>
+            <th>Rarity</th>
+            <th>TCGplayer</th>
+            <th>CM 7d avg</th>
+            <th>7D Δ</th>
+            <th>30D Δ</th>
+          </tr>
+        </thead>
+        <tbody id="card-table-body"></tbody>
+      </table>
+    </div>
     <button id="load-more" class="load-more" hidden>Load more</button>
   </main>
 
@@ -106,8 +127,8 @@
     Prices: TCGplayer market via the Pokémon TCG API, updated daily. Prices are market estimates, not offers.
   </footer>
 
-  <script src="js/common.js?v=20260611-pk5"></script>
-  <script src="js/watchlist.js?v=20260611-pk5"></script>
-  <script src="js/pokemon.js?v=20260611-pk5"></script>
+  <script src="js/common.js?v=20260611-pk6"></script>
+  <script src="js/watchlist.js?v=20260611-pk6"></script>
+  <script src="js/pokemon.js?v=20260611-pk6"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="PokeSnipr" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="stylesheet" href="css/style.css?v=20260611-pk4" />
+  <link rel="stylesheet" href="css/style.css?v=20260611-pk6" />
   <script src="js/auth.js?v=20260611-auth2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 </head>
@@ -48,7 +48,7 @@
         <h2>Set value leaderboard</h2>
         <span class="badge">Sum of TCGplayer market prices, per set</span>
       </div>
-      <p class="panel-sub">Total market value of every priced card in the most recent sets.</p>
+      <p class="panel-sub">Total market value of every priced card across the most recent sets.</p>
       <div class="chart-wrap tall"><canvas id="chart-setvalue"></canvas></div>
     </section>
 
@@ -59,6 +59,15 @@
       </div>
       <p class="panel-sub" id="history-sub">Recorded once a day by the auto-refresh job — the chart gets richer every day.</p>
       <div class="chart-wrap"><canvas id="chart-history"></canvas></div>
+    </section>
+
+    <section class="panel" id="growth-panel">
+      <div class="panel-head">
+        <h2>Set value % growth</h2>
+        <span class="badge">Normalized from first snapshot · all sets from 0%</span>
+      </div>
+      <p class="panel-sub">Each set starts at 0% — this shows which sets are gaining or losing relative value. A rising line means the set is heating up; falling means cooling.</p>
+      <div class="chart-wrap"><canvas id="chart-growth"></canvas></div>
     </section>
 
     <section class="panel">
@@ -78,13 +87,27 @@
       <p class="panel-sub">
         How close the cheapest active TCGplayer listing sits to the market price, per set (cards $2+).
         Near or above 100% means sellers aren't undercutting — supply is tight. Well below 100% means
-        heavy undercutting — supply is loose. Computed from live TCGplayer listing and market prices.
+        heavy undercutting — supply is loose.
       </p>
       <div class="chart-wrap"><canvas id="chart-spread"></canvas></div>
       <h3 class="sub-h">Tightest cards right now</h3>
       <div class="table-scroll">
         <table class="data-table" id="tight-table">
           <thead><tr><th>Card</th><th>Set</th><th>Market</th><th>Lowest listing</th><th>Listing ÷ market</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Pack EV rankings</h2>
+        <span class="badge">Estimated pack EV vs $5.49 MSRP</span>
+      </div>
+      <p class="panel-sub">Pack EV = (set total value × 10 cards per pack) ÷ priced cards — a rough estimate of the expected value per pack. Higher ratio = better expected value relative to MSRP.</p>
+      <div class="table-scroll">
+        <table class="data-table" id="pack-ev-table">
+          <thead><tr><th>#</th><th>Set</th><th>Game</th><th>Total value</th><th>Pack EV</th><th>EV ratio</th><th>Top card</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -124,7 +147,7 @@
     Cardmarket averages via the Pokémon TCG API. Prices are market estimates, not offers.
   </footer>
 
-  <script src="js/common.js?v=20260611-pk4"></script>
-  <script src="js/analytics.js?v=20260611-pk4"></script>
+  <script src="js/common.js?v=20260611-pk6"></script>
+  <script src="js/analytics.js?v=20260611-pk6"></script>
 </body>
 </html>

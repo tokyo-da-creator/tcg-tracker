@@ -420,10 +420,53 @@ function renderWatchlist() {
 
 document.addEventListener("watchlist-changed", renderWatchlist);
 
+async function loadMarketStats() {
+  const bar = document.getElementById("market-stats-bar");
+  if (!bar) return;
+  try {
+    const res = await fetch("data/analytics.json", { cache: "no-cache" });
+    if (!res.ok) return;
+    const a = await res.json();
+    const pk = a.pokemon?.sets ?? [];
+    const op = a.onepiece?.sets ?? [];
+    const pkTotal = pk.reduce((s, x) => s + x.totalValue, 0);
+    const opTotal = op.reduce((s, x) => s + x.totalValue, 0);
+    const combined = pkTotal + opTotal;
+
+    const hist = a.valueHistory ?? [];
+    let pkDelta = null, opDelta = null;
+    if (hist.length >= 2) {
+      const prev = hist[hist.length - 2], curr = hist[hist.length - 1];
+      const pPk = Object.values(prev.pokemon ?? {}).reduce((s, v) => s + v, 0);
+      const cPk = Object.values(curr.pokemon ?? {}).reduce((s, v) => s + v, 0);
+      const pOp = Object.values(prev.onepiece ?? {}).reduce((s, v) => s + v, 0);
+      const cOp = Object.values(curr.onepiece ?? {}).reduce((s, v) => s + v, 0);
+      if (pPk > 0) pkDelta = ((cPk - pPk) / pPk) * 100;
+      if (pOp > 0) opDelta = ((cOp - pOp) / pOp) * 100;
+    }
+
+    const dHtml = v => v == null ? "" : `<span class="ms-delta ${v >= 0 ? "up" : "down"}">${v >= 0 ? "▲" : "▼"} ${Math.abs(v).toFixed(1)}%</span>`;
+    const stat = (label, val, delta) =>
+      `<div class="ms-stat"><span class="ms-label">${esc(label)}</span><span class="ms-val">${val} ${dHtml(delta)}</span></div>`;
+
+    bar.innerHTML =
+      stat("Pokémon market", usd(pkTotal), pkDelta) +
+      `<span class="ms-sep">|</span>` +
+      stat("One Piece market", usd(opTotal), opDelta) +
+      `<span class="ms-sep">|</span>` +
+      stat("Combined tracked", usd(combined), null) +
+      `<span class="ms-sep">|</span>` +
+      `<div class="ms-stat"><span class="ms-label">Sets tracked</span><span class="ms-val">${pk.length + op.length}</span></div>` +
+      `<a class="ms-link" href="analytics.html">Full analytics →</a>`;
+    bar.hidden = false;
+  } catch { /* market stats are optional */ }
+}
+
 (async () => {
   renderWatchlist();
   const cache = await loadFeaturedCache();
   const sealed = await loadSealedCache();
+  loadMarketStats();
   loadPokemonPanels(cache);
   loadOnePiecePanel(cache);
   renderSealedRow(sealed);
