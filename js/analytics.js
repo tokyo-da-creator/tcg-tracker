@@ -478,11 +478,9 @@ function renderSentiment(movers, analytics) {
   const section = document.getElementById("sentiment-section");
   if (!section) return;
 
-  const allMovers = [
-    ...(movers?.pokemon ?? []),
-    ...(movers?.onepiece ?? []),
-    ...(movers?.interim?.pokemon ?? []),
-  ];
+  const allMovers = movers?.ready
+    ? [...(movers.pokemon ?? []), ...(movers.onepiece ?? [])]
+    : [...(movers?.interim?.pokemon ?? [])];
 
   let score = 50;
   let upCount = 0, downCount = 0;
@@ -616,7 +614,7 @@ function openAnalyticsCard(card) {
     ]);
     baseChartOpts();
     document.getElementById("updated").textContent =
-      `Data refreshed ${analytics.updated.replace("T", " ").slice(0, 16)} UTC · auto-updates every 6 hours.`;
+      `Data refreshed ${analytics.updated.replace("T", " ").slice(0, 16)} UTC · refreshes automatically.`;
     renderSentiment(movers, analytics);
     renderTiles(analytics, movers);
     renderSetValueChart(analytics);

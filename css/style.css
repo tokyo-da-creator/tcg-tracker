@@ -1760,6 +1760,11 @@ html { scroll-behavior: smooth; }
   .mobile-bottom-nav { display: flex; }
   main { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 72px) !important; }
   body > .footer { margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); }
+
+  /* Hide header nav on mobile — bottom dock handles navigation */
+  .header .nav { display: none; }
+  .header { justify-content: space-between; }
+
   .search-btn-hint { display: none; }
   .search-btn { padding: 0.42rem 0.55rem; }
   .sentiment-card { gap: 1rem; }

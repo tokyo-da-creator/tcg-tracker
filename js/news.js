@@ -34,7 +34,7 @@ function renderNews() {
     const data = await res.json();
     newsItems = data.items ?? [];
     document.getElementById("updated").textContent =
-      `Refreshed ${data.updated.replace("T", " ").slice(0, 16)} UTC · auto-updates every 6 hours.`;
+      `Refreshed ${data.updated.replace("T", " ").slice(0, 16)} UTC · refreshes automatically.`;
     renderNews();
   } catch (err) {
     // local fallback: live fetch through the proxy used by the ticker

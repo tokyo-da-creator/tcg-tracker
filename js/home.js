@@ -269,7 +269,7 @@ async function loadPokemonPanels(cache) {
       : pk.set.name;
     renderCachedRow(featuredEl, pk.cards, "pokemon");
     document.getElementById("freshness").textContent =
-      `Prices cached ${cache.updated.slice(0, 10)} · refreshed automatically every 6 hours.`;
+      `Prices cached ${cache.updated.slice(0, 10)} · refreshes automatically.`;
     if (!moversRendered) {
       moversEl.innerHTML =
         "<p class='panel-sub'>Price-move data is being collected — check back soon.</p>";
