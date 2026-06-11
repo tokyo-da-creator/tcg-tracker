@@ -2,7 +2,8 @@ name: Update news and prices
 
 on:
   schedule:
-    - cron: "* * * * *" # every minute
+    - cron: "0 * * * *"   # top of every hour — GitHub reliably honors this
+    - cron: "30 * * * *"  # plus the half-hour mark for twice-hourly runs
   workflow_dispatch:
     inputs:
       test_telegram:

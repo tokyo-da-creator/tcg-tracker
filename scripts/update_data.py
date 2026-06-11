@@ -713,12 +713,24 @@ def run_alerts(movers, sealed, news):
         print("alerts: seeding baseline state (no messages on first run)")
         save_alert_state(state)
         return
+
+    if not msgs:
+        print("alerts: nothing new to send")
+        save_alert_state(state)
+        return
+
+    print(f"alerts: {len(msgs)} message(s) queued")
     sent = 0
     for m in msgs:
+        # Log a short preview so the Actions log shows what was sent
+        preview = m.split("\n")[0]
+        print(f"  → {preview}")
         if tg_send(token, chat_id, m):
             sent += 1
+        else:
+            print(f"    ✗ send failed")
         time.sleep(0.5)
-    print(f"alerts: sent {sent}/{len(msgs)} telegram message(s)")
+    print(f"alerts: sent {sent}/{len(msgs)} message(s) to chat {chat_id}")
     save_alert_state(state)
 
 
