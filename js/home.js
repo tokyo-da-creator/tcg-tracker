@@ -14,7 +14,11 @@ function pkBestPrice(card) {
   if (!prices) return null;
   const variants = Object.values(prices);
   if (!variants.length) return null;
-  return variants.reduce((best, p) => ((p.market ?? 0) > (best.market ?? 0) ? p : best));
+  return variants.reduce((best, p) => {
+    const va = p.market ?? p.mid ?? p.low ?? p.high ?? 0;
+    const vb = best.market ?? best.mid ?? best.low ?? best.high ?? 0;
+    return va > vb ? p : best;
+  });
 }
 
 function miniCard({ img, name, sub, priceText, onClick }) {

@@ -28,7 +28,8 @@ function renderTiles(analytics, movers) {
   const op = analytics.onepiece.sets;
   const pkTotal = pk.reduce((s, x) => s + x.totalValue, 0);
   const opTotal = op.reduce((s, x) => s + x.totalValue, 0);
-  const allTops = [...pk, ...op].map((s) => s.topCard).sort((a, b) => b.price - a.price);
+  const allTops = [...pk, ...op].map((s) => s.topCard).filter(Boolean).sort((a, b) => b.price - a.price);
+  const topCard = allTops[0] ?? { price: 0, name: "No data yet" };
   const moverList = movers?.ready ? [...movers.pokemon, ...movers.onepiece]
     : movers?.interim?.pokemon ?? [];
   const big = moverList.length
@@ -38,7 +39,7 @@ function renderTiles(analytics, movers) {
   document.getElementById("tiles").innerHTML =
     tile("Pokémon market tracked", usd(pkTotal), `${pk.length} recent sets · ${pk.reduce((s, x) => s + x.pricedCards, 0)} priced cards`) +
     tile("One Piece market tracked", usd(opTotal), `${op.length} recent sets · ${op.reduce((s, x) => s + x.pricedCards, 0)} priced cards`) +
-    tile("Most valuable card", usd(allTops[0].price), allTops[0].name) +
+    tile("Most valuable card", usd(topCard.price), topCard.name) +
     tile("Biggest move", big ? `${big.pct > 0 ? "▲" : "▼"} ${Math.abs(big.pct).toFixed(1)}%` : "—",
       big ? big.name : "collecting data");
 }
@@ -86,11 +87,13 @@ function renderHistoryChart(analytics) {
   });
   const nameOf = (key) => {
     const [game, id] = key.split(":");
+    if (!analytics[game]) return id;
     return (analytics[game].sets.find((s) => s.id === id)?.name ?? id) +
       (game === "onepiece" ? " (OP)" : "");
   };
   const datasets = [...setIds].map((key, i) => {
     const [game, id] = key.split(":");
+    if (!analytics[game]) return null;
     return {
       label: nameOf(key),
       data: hist.map((row) => row[game][id] ?? null),
@@ -102,7 +105,7 @@ function renderHistoryChart(analytics) {
   });
   new Chart(document.getElementById("chart-history"), {
     type: "line",
-    data: { labels: hist.map((r) => r.date), datasets },
+    data: { labels: hist.map((r) => r.date), datasets: datasets.filter(Boolean) },
     options: {
       maintainAspectRatio: false,
       plugins: { tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${usd(c.raw)}` } } },

@@ -23,9 +23,10 @@ async function pkFetch(path) {
   return res.json();
 }
 
-/* Best available TCGplayer price block — picks the variant with the highest available price
- * (market → mid → low → high). Using only market to pick the variant misses expensive
- * holofoil variants whose market field is null but have real low/mid prices. */
+/* Best available TCGplayer price block.
+ * Picks the variant with the highest ANY price (market → mid → low → high).
+ * Using only market to pick the variant misses expensive holofoil variants
+ * whose market field is null but have real low/mid prices. */
 function bestPrice(card) {
   const prices = card.tcgplayer?.prices;
   if (!prices) return null;
@@ -40,11 +41,31 @@ function bestPrice(card) {
   return { variant, ...p };
 }
 
-/* Best available numeric price for sorting — uses market, then mid, then low, then high. */
+/* Best sortable price — falls back through all price fields. Returns -1 if none. */
 function sortPrice(card) {
   const p = bestPrice(card);
   if (!p) return -1;
   return p.market ?? p.mid ?? p.low ?? p.high ?? -1;
+}
+
+/* Rarity tier — used as a price proxy when TCGplayer data is missing for a card.
+ * Ensures "Price: High → Low" shows Secret/Ultra Rares before Commons even without prices. */
+const RARITY_TIER_MAP = [
+  ["hyper rare", 9], ["secret rare", 9],
+  ["special illustration rare", 8],
+  ["ultra rare", 7], ["shiny ultra rare", 7],
+  ["illustration rare", 6], ["shiny rare", 6],
+  ["double rare", 5], ["ace spec rare", 5], ["trainer gallery rare holo", 5],
+  ["holo rare", 4], ["rare holo", 4], ["rare", 3],
+  ["uncommon", 2], ["common", 1],
+];
+
+function rarityTier(card) {
+  const r = (card.rarity ?? "").toLowerCase();
+  for (const [key, val] of RARITY_TIER_MAP) {
+    if (r.includes(key)) return val;
+  }
+  return 0;
 }
 
 /* ---------- Skeleton loading ---------- */
@@ -64,6 +85,7 @@ function showSkeleton(n = 18) {
 /* ---------- Card tile ---------- */
 function cardLi(card) {
   const p = bestPrice(card);
+  const displayPrice = p ? (p.market ?? p.mid ?? p.low ?? p.high) : null;
   const li = document.createElement("li");
   li.className = `tcard ${rarityClass(card.rarity)}`.trim();
   li.innerHTML = `
@@ -71,7 +93,7 @@ function cardLi(card) {
     <div class="name">${esc(card.name)}</div>
     <div class="meta">${esc(card.set.name)} · #${esc(card.number)}/${esc(card.set.printedTotal)}</div>
     <div class="pricebar">
-      <span class="price">${p ? usd(p.market ?? p.mid ?? p.low) : "—"}</span>
+      <span class="price">${displayPrice != null ? usd(displayPrice) : "—"}</span>
       <span class="rarity">${esc(card.rarity ?? "—")}</span>
     </div>`;
   li.appendChild(wlStarButton({
@@ -81,7 +103,7 @@ function cardLi(card) {
     image: card.images.small,
     sub: `${card.set.name} · #${card.number}`,
     detail: `pokemon:${card.id}`,
-    price: p ? (p.market ?? p.mid ?? p.low) : null,
+    price: displayPrice,
   }));
   li.addEventListener("click", () => openCard(card));
   return li;
@@ -97,15 +119,24 @@ function render() {
     sorted.sort((a, b) => {
       const pa = sortPrice(a);
       const pb = sortPrice(b);
-      if (pa < 0 && pb < 0) return 0;
-      if (pa < 0) return 1;   // unpriced → always last
-      if (pb < 0) return -1;
-      return sort === "price-desc" ? pb - pa : pa - pb;
+      const hasPriceA = pa >= 0;
+      const hasPriceB = pb >= 0;
+
+      if (hasPriceA && hasPriceB) {
+        return sort === "price-desc" ? pb - pa : pa - pb;
+      }
+      // Both unpriced: sort by rarity as a value proxy
+      if (!hasPriceA && !hasPriceB) {
+        const ra = rarityTier(a), rb = rarityTier(b);
+        return sort === "price-desc" ? rb - ra : ra - rb;
+      }
+      // One priced, one not: priced cards always appear first
+      return hasPriceA ? -1 : 1;
     });
   } else if (sort === "number") {
     sorted.sort((a, b) => (parseInt(a.number) || 0) - (parseInt(b.number) || 0));
   } else if (sort === "name") {
-    sorted.sort((a, b) => a.name.localeCompare(b.name));
+    sorted.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
   }
 
   sorted.forEach((c, i) => {
@@ -117,7 +148,7 @@ function render() {
 
   loadMoreBtn.hidden = mode === "set" || cards.length >= totalCount;
 
-  const updated = cards.find((c) => c.tcgplayer?.updatedAt)?.tcgplayer.updatedAt;
+  const updated = cards.find((c) => c.tcgplayer?.updatedAt)?.tcgplayer?.updatedAt;
   updatedEl.textContent = updated
     ? `TCGplayer prices updated ${updated} · ${totalCount} cards`
     : "";
@@ -148,13 +179,13 @@ function renderSetStats(allCards) {
 
   const coverage = priced.length / allCards.length;
   const sparseWarning = coverage < 0.4
-    ? `<div class="sparse-warn">⚠ Only ${priced.length} of ${allCards.length} cards have price data — this set may be too new for full market coverage. Try a set released 4+ weeks ago for complete stats and signals.</div>`
+    ? `<div class="sparse-warn">⚠ Only ${priced.length} of ${allCards.length} cards have price data — this set may be too new for full coverage. Cards without prices are sorted by rarity tier. Try a set released 4+ weeks ago for complete stats.</div>`
     : "";
 
-  const total  = prices.reduce((s, v) => s + v, 0);
-  const avg    = total / prices.length;
-  const median = prices[Math.floor(prices.length / 2)];
-  const topCard = priced.reduce((top, c) => sortPrice(c) > sortPrice(top) ? c : top);
+  const total   = prices.reduce((s, v) => s + v, 0);
+  const avg     = total / prices.length;
+  const median  = prices[Math.floor(prices.length / 2)] ?? 0;
+  const topCard = priced.reduce((top, c) => sortPrice(c) > sortPrice(top) ? c : top, priced[0]);
 
   document.getElementById("set-tiles").innerHTML = `
     ${sparseWarning}
@@ -175,20 +206,19 @@ function renderSetStats(allCards) {
     </div>
     <div class="tile tile-anim" style="animation-delay:0.21s">
       <div class="t-label">Price Coverage</div>
-      <div class="t-value">${Math.round(priced.length / allCards.length * 100)}%</div>
+      <div class="t-value">${Math.round(coverage * 100)}%</div>
       <div class="t-sub">${priced.length} of ${allCards.length} cards priced</div>
     </div>`;
 
   const tiers = [
-    { label: "< $1",     min: 0,   max: 1,        color: "#97a0c8" },
-    { label: "$1–5",     min: 1,   max: 5,         color: "#3ddc84" },
-    { label: "$5–25",    min: 5,   max: 25,        color: "#3d7dca" },
-    { label: "$25–100",  min: 25,  max: 100,       color: "#ffcb05" },
-    { label: "$100+",    min: 100, max: Infinity,  color: "#ff5d5d" },
+    { label: "< $1",    min: 0,   max: 1,       color: "#97a0c8" },
+    { label: "$1–5",    min: 1,   max: 5,        color: "#3ddc84" },
+    { label: "$5–25",   min: 5,   max: 25,       color: "#3d7dca" },
+    { label: "$25–100", min: 25,  max: 100,      color: "#ffcb05" },
+    { label: "$100+",   min: 100, max: Infinity, color: "#ff5d5d" },
   ];
   const tierData = tiers.map(t => ({
-    ...t,
-    count: prices.filter(p => p >= t.min && p < t.max).length,
+    ...t, count: prices.filter(p => p >= t.min && p < t.max).length,
   }));
   const maxCount = Math.max(...tierData.map(t => t.count), 1);
 
@@ -218,7 +248,6 @@ function renderInsights(allCards) {
     const reasons = [];
     let score = 0;
 
-    // Supply squeeze: lowest listing is ≥ 88% of market price
     if (p.low && p.low > 0) {
       const ratio = p.low / mkt;
       if (ratio >= 0.88) {
@@ -227,7 +256,6 @@ function renderInsights(allCards) {
       }
     }
 
-    // Cardmarket trend > TCGplayer by ≥ 20% → US underpriced vs EU
     const cm = card.cardmarket?.prices;
     if (cm?.trendPrice) {
       const cmUsd = cm.trendPrice * EUR_USD;
@@ -238,21 +266,17 @@ function renderInsights(allCards) {
       }
     }
 
-    // Cardmarket 1-day avg rising vs 7-day (momentum signal)
     if (cm?.avg1 && cm?.avg7 && cm.avg1 > cm.avg7 * 1.08) {
       reasons.push({ label: "Rising ▲", color: "up" });
       score += 12;
     }
 
-    // High spread: market is ≥ 30% above the lowest listing (buyers paying up)
     if (p.low && mkt >= p.low * 1.30) {
       reasons.push({ label: "High Demand", color: "accent" });
       score += 10;
     }
 
-    if (reasons.length > 0) {
-      signals.push({ card, reasons, score, price: mkt });
-    }
+    if (reasons.length > 0) signals.push({ card, reasons, score, price: mkt });
   }
   signals.sort((a, b) => b.score - a.score);
   const topSignals = signals.slice(0, 10);
@@ -276,21 +300,13 @@ function renderInsights(allCards) {
             </div>
           </div>
         </div>`).join("");
-      topSignals.forEach((s, i) => {
-        signalsEl.children[i]?.addEventListener("click", () => openCard(s.card));
+      Array.from(signalsEl.children).forEach((el, i) => {
+        el.addEventListener("click", () => openCard(topSignals[i].card));
       });
     }
   }
 
   /* --- Best bang for buck --- */
-  const RARITY_TIER = {
-    "common": 1, "uncommon": 2, "rare": 3, "holo rare": 4,
-    "double rare": 5, "ace spec rare": 5, "ultra rare": 6,
-    "illustration rare": 6, "special illustration rare": 7,
-    "hyper rare": 8, "secret rare": 8, "shiny rare": 6, "shiny ultra rare": 7,
-    "trainer gallery rare holo": 5,
-  };
-
   const bangCards = allCards
     .filter(c => {
       const sp = sortPrice(c);
@@ -298,10 +314,7 @@ function renderInsights(allCards) {
     })
     .map(card => {
       const sp = sortPrice(card);
-      const rarityKey = (card.rarity ?? "").toLowerCase();
-      const tier = Object.entries(RARITY_TIER).reduce(
-        (best, [key, val]) => rarityKey.includes(key) ? Math.max(best, val) : best, 1
-      );
+      const tier = rarityTier(card);
       return { card, price: sp, tier, score: (tier * tier) / (Math.log(sp + 1) || 1) };
     })
     .filter(x => x.tier >= 4)
@@ -324,8 +337,8 @@ function renderInsights(allCards) {
             </div>
           </div>
         </div>`).join("");
-      bangCards.forEach((b, i) => {
-        bangEl.children[i]?.addEventListener("click", () => openCard(b.card));
+      Array.from(bangEl.children).forEach((el, i) => {
+        el.addEventListener("click", () => openCard(bangCards[i].card));
       });
     }
   }
@@ -354,7 +367,7 @@ function openCard(card) {
     </div>` : "";
 
   const sp = bestPrice(card);
-  const spread = (sp && sp.market && sp.low)
+  const spread = (sp?.market && sp?.low && sp.low > 0)
     ? `<div class="spread-row"><span class="spread-label">Market vs low listing</span><span class="spread-val">${((sp.market / sp.low - 1) * 100).toFixed(0)}% premium</span></div>`
     : "";
 
@@ -429,7 +442,7 @@ async function renderModalChart(card) {
     const pct = first ? ((last - first) / first) * 100 : 0;
     const up = pct >= 0;
     const color = up ? "#3ddc84" : "#ff5d5d";
-    const bg = up ? "rgba(61,220,132,0.12)" : "rgba(255,93,93,0.12)";
+    const bg    = up ? "rgba(61,220,132,0.12)" : "rgba(255,93,93,0.12)";
 
     wrap.innerHTML = `
       <div class="hist-head">
@@ -446,23 +459,14 @@ async function renderModalChart(card) {
       type: "line",
       data: {
         labels: pts.map(p => p.date),
-        datasets: [{
-          data: pts.map(p => p.v),
-          borderColor: color,
-          backgroundColor: bg,
-          fill: true, tension: 0.3,
-          pointRadius: pts.length > 20 ? 2 : 4,
-          pointHoverRadius: 7,
-          pointBackgroundColor: color,
-        }],
+        datasets: [{ data: pts.map(p => p.v), borderColor: color, backgroundColor: bg,
+          fill: true, tension: 0.3, pointRadius: pts.length > 20 ? 2 : 4, pointHoverRadius: 7,
+          pointBackgroundColor: color }],
       },
       options: {
         animation: { duration: 900, easing: "easeOutQuart" },
         responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: c => ` ${usd(c.raw)}` } },
-        },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${usd(c.raw)}` } } },
         scales: {
           y: { ticks: { callback: v => usd(v), font: { size: 10 } }, grid: { color: "rgba(151,160,200,0.08)" } },
           x: { ticks: { font: { size: 10 }, maxTicksLimit: 6 }, grid: { display: false } },
@@ -475,11 +479,17 @@ async function renderModalChart(card) {
   // Fallback: Cardmarket rolling averages
   const cm = card.cardmarket?.prices;
   if (cm && (cm.avg30 || cm.avg7 || cm.avg1)) {
-    const vals = [cm.avg30 * EUR_USD, cm.avg7 * EUR_USD, cm.avg1 * EUR_USD];
-    const pct = vals[0] ? ((vals[2] - vals[0]) / vals[0]) * 100 : 0;
-    const up = pct >= 0;
+    const vals = [
+      cm.avg30 ? cm.avg30 * EUR_USD : null,
+      cm.avg7  ? cm.avg7  * EUR_USD : null,
+      cm.avg1  ? cm.avg1  * EUR_USD : null,
+    ];
+    const valid = vals.filter(v => v != null);
+    const pct = valid.length >= 2 && valid[0]
+      ? ((valid[valid.length - 1] - valid[0]) / valid[0]) * 100 : 0;
+    const up    = pct >= 0;
     const color = up ? "#3ddc84" : "#ff5d5d";
-    const bg = up ? "rgba(61,220,132,0.12)" : "rgba(255,93,93,0.12)";
+    const bg    = up ? "rgba(61,220,132,0.12)" : "rgba(255,93,93,0.12)";
 
     wrap.innerHTML = `
       <div class="hist-head">
@@ -492,22 +502,14 @@ async function renderModalChart(card) {
       type: "line",
       data: {
         labels: ["30-day avg", "7-day avg", "Today"],
-        datasets: [{
-          data: vals,
-          borderColor: color,
-          backgroundColor: bg,
-          fill: true, tension: 0.4,
-          pointRadius: 6, pointHoverRadius: 9,
-          pointBackgroundColor: color,
-        }],
+        datasets: [{ data: vals, borderColor: color, backgroundColor: bg,
+          fill: true, tension: 0.4, pointRadius: 6, pointHoverRadius: 9,
+          pointBackgroundColor: color }],
       },
       options: {
         animation: { duration: 900, easing: "easeOutQuart" },
         responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: c => ` ${usd(c.raw)}` } },
-        },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${usd(c.raw)}` } } },
         scales: {
           y: { ticks: { callback: v => usd(v), font: { size: 10 } }, grid: { color: "rgba(151,160,200,0.08)" } },
           x: { grid: { display: false } },
@@ -517,12 +519,9 @@ async function renderModalChart(card) {
     return;
   }
 
-  // No chart data
-  if (pts.length === 1) {
-    wrap.innerHTML = `<div class="note">Daily price tracking started ${esc(pts[0].date)} — chart appears as snapshots accumulate.</div>`;
-  } else {
-    wrap.innerHTML = `<div class="note">Price chart will appear as daily snapshots accumulate for this card.</div>`;
-  }
+  wrap.innerHTML = pts.length === 1
+    ? `<div class="note">Daily price tracking started ${esc(pts[0].date)} — chart appears as snapshots accumulate.</div>`
+    : `<div class="note">Price chart will appear as daily snapshots accumulate for this card.</div>`;
 }
 
 /* ---------- Data loading ---------- */

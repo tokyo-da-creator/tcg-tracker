@@ -60,7 +60,7 @@ function render() {
   const sort = sortSelect.value;
   if (sort === "price-desc") view.sort((a, b) => (price(b) ?? -1) - (price(a) ?? -1));
   else if (sort === "price-asc") view.sort((a, b) => (price(a) ?? 1e9) - (price(b) ?? 1e9));
-  else if (sort === "name") view.sort((a, b) => a.card_name.localeCompare(b.card_name));
+  else if (sort === "name") view.sort((a, b) => (a.card_name ?? "").localeCompare(b.card_name ?? ""));
   else view.sort((a, b) => (a.card_set_id ?? "").localeCompare(b.card_set_id ?? ""));
 
   view.forEach((c) => grid.appendChild(cardLi(c)));
@@ -125,7 +125,8 @@ async function loadSet(setId) {
   grid.innerHTML = "";
   updatedEl.textContent = "";
   try {
-    cards = await opFetch(`/sets/${encodeURIComponent(setId)}/`);
+    const result = await opFetch(`/sets/${encodeURIComponent(setId)}/`);
+    cards = Array.isArray(result) ? result : [];
     render();
   } catch (err) {
     statusEl.textContent = "Couldn't reach the OPTCG API — please try again in a moment.";
