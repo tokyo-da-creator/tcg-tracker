@@ -2,7 +2,7 @@ name: Update news and prices
 
 on:
   schedule:
-    - cron: "*/15 * * * *" # every 15 minutes
+    - cron: "* * * * *" # every minute
   workflow_dispatch:
     inputs:
       test_telegram:
@@ -31,8 +31,8 @@ jobs:
         run: |
           python3 - <<'EOF'
           import os, urllib.request, urllib.parse, json
-          token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-          chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+          token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+          chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
           if not token or not chat_id:
             print("ERROR: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID secret is not set!")
             exit(1)

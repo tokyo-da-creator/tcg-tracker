@@ -692,8 +692,8 @@ def build_alerts(cfg, state, movers, sealed, news, today):
 
 
 def run_alerts(movers, sealed, news):
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 
     if not token or not chat_id:
         print("alerts: TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not set — skipping alerts")
