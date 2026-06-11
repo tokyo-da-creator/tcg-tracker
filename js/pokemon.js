@@ -23,13 +23,19 @@ async function pkFetch(path) {
   return res.json();
 }
 
-/* Best available TCGplayer price block — picks the variant with the highest market price. */
+/* Best available TCGplayer price block — picks the variant with the highest available price
+ * (market → mid → low → high). Using only market to pick the variant misses expensive
+ * holofoil variants whose market field is null but have real low/mid prices. */
 function bestPrice(card) {
   const prices = card.tcgplayer?.prices;
   if (!prices) return null;
   const variants = Object.entries(prices);
   if (!variants.length) return null;
-  variants.sort((a, b) => (b[1].market ?? 0) - (a[1].market ?? 0));
+  variants.sort((a, b) => {
+    const va = a[1].market ?? a[1].mid ?? a[1].low ?? a[1].high ?? 0;
+    const vb = b[1].market ?? b[1].mid ?? b[1].low ?? b[1].high ?? 0;
+    return vb - va;
+  });
   const [variant, p] = variants[0];
   return { variant, ...p };
 }
