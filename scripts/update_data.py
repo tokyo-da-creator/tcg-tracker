@@ -694,19 +694,22 @@ def build_alerts(cfg, state, movers, sealed, news, today):
 def run_alerts(movers, sealed, news):
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+
+    if not token or not chat_id:
+        print("alerts: TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not set — skipping alerts")
+        return
+
     cfg = load_alert_config()
     state = load_alert_state()
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     seeding = not (DATA / "alert-state.json").exists()
+
+    # Build alerts (mutates dedup state) only after confirming Telegram is configured,
+    # so we never permanently dedup events that were never actually sent.
     msgs = build_alerts(cfg, state, movers, sealed, news, today)
 
-    if not token or not chat_id:
-        print(f"alerts: telegram not configured; would send {len(msgs)} message(s)")
-        save_alert_state(state)
-        return
     if seeding:
-        # First run only records baselines so we don't blast every headline /
-        # every sealed product on day one.
+        # First run records baselines so we don't blast every headline on day one.
         print("alerts: seeding baseline state (no messages on first run)")
         save_alert_state(state)
         return

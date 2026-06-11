@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: "17 */6 * * *" # every 6 hours
   workflow_dispatch:
+    inputs:
+      test_telegram:
+        description: "Send a test Telegram message to verify credentials"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 permissions:
   contents: write
@@ -14,13 +23,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Test Telegram connection
+        if: github.event.inputs.test_telegram == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 - <<'EOF'
+          import os, urllib.request, urllib.parse, json
+          token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+          chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+          if not token or not chat_id:
+            print("ERROR: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID secret is not set!")
+            exit(1)
+          payload = urllib.parse.urlencode({
+            "chat_id": chat_id,
+            "text": "✅ <b>PokeSnipr bot test</b>\n\nTelegram alerts are working! You'll receive notifications for big market movers, news, and watchlist triggers.",
+            "parse_mode": "HTML",
+          }).encode()
+          req = urllib.request.Request(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data=payload
+          )
+          with urllib.request.urlopen(req, timeout=15) as res:
+            result = json.loads(res.read())
+          if result.get("ok"):
+            print(f"SUCCESS: test message sent to chat {chat_id}")
+          else:
+            print(f"ERROR: Telegram API returned: {result}")
+            exit(1)
+          EOF
+
       - name: Refresh data
+        if: github.event.inputs.test_telegram != 'true'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python3 scripts/update_data.py
 
       - name: Commit if changed
+        if: github.event.inputs.test_telegram != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
