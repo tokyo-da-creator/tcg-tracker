@@ -156,12 +156,52 @@ function render() {
   if (mode === "set" && cards.length > 0) {
     renderSetStats(cards);
     renderInsights(cards);
+    showNoPricesWarning(cards);
   } else {
     const ov = document.getElementById("set-overview");
     const ins = document.getElementById("insights");
+    const np = document.getElementById("no-prices-warn");
     if (ov) ov.hidden = true;
     if (ins) ins.hidden = true;
+    if (np) np.hidden = true;
   }
+}
+
+/* ---------- No-price warning ---------- */
+function showNoPricesWarning(allCards) {
+  const warn = document.getElementById("no-prices-warn");
+  if (!warn) return;
+
+  const pricedCount = allCards.filter(c => sortPrice(c) >= 0).length;
+  if (pricedCount > 0) { warn.hidden = true; return; }
+
+  // Zero price data — show the warning with the current set name + 3 suggestions
+  const setName = setSelect.options[setSelect.selectedIndex]?.text?.split(" (")[0] ?? "This set";
+  const nameEl = document.getElementById("np-set-name");
+  if (nameEl) nameEl.textContent = setName;
+
+  // Pick 3 well-known sets with reliable price data as suggestions
+  const suggestions = [
+    { label: "Prismatic Evolutions", id: "sv8pt5" },
+    { label: "Surging Sparks",       id: "sv8"    },
+    { label: "Stellar Crown",        id: "sv7"    },
+  ];
+  suggestions.forEach((s, i) => {
+    const btn = document.getElementById(`np-suggest-${i + 1}`);
+    if (!btn) return;
+    btn.textContent = s.label;
+    btn.onclick = () => {
+      const opt = Array.from(setSelect.options).find(o => o.value === s.id);
+      if (opt) {
+        setSelect.value = s.id;
+        mode = "set";
+        searchEl.value = "";
+        loadPage(true);
+      }
+    };
+  });
+
+  warn.hidden = false;
 }
 
 /* ---------- Set stats panel ---------- */
@@ -282,12 +322,20 @@ function renderInsights(allCards) {
   const topSignals = signals.slice(0, 10);
 
   const signalsBadge = document.getElementById("signals-badge");
-  if (signalsBadge) signalsBadge.textContent = topSignals.length || "";
+  if (signalsBadge) {
+    signalsBadge.textContent = topSignals.length ? String(topSignals.length) : "";
+    signalsBadge.hidden = !topSignals.length;
+  }
+
+  const noPriceData = allCards.every(c => sortPrice(c) < 0);
 
   const signalsEl = document.getElementById("buy-signals-list");
   if (signalsEl) {
     if (!topSignals.length) {
-      signalsEl.innerHTML = `<p class="status">No strong signals in this set — prices appear balanced.</p>`;
+      const msg = noPriceData
+        ? "No TCGplayer price data for this set yet — signals will appear once prices are available."
+        : "No strong signals right now — prices across this set appear balanced.";
+      signalsEl.innerHTML = `<p class="status">${msg}</p>`;
     } else {
       signalsEl.innerHTML = topSignals.map(({ card, reasons, price }) => `
         <div class="insight-card" data-id="${esc(card.id)}">
@@ -324,7 +372,10 @@ function renderInsights(allCards) {
   const bangEl = document.getElementById("bang-list");
   if (bangEl) {
     if (!bangCards.length) {
-      bangEl.innerHTML = `<p class="status">Not enough high-rarity price data to rank bang-for-buck in this set.</p>`;
+      const bangMsg = noPriceData
+        ? "No TCGplayer price data for this set yet — bang-for-buck rankings will appear once prices are available."
+        : "Not enough high-rarity price data to rank bang-for-buck in this set.";
+      bangEl.innerHTML = `<p class="status">${bangMsg}</p>`;
     } else {
       bangEl.innerHTML = bangCards.map(({ card, price }) => `
         <div class="insight-card" data-id="${esc(card.id)}">

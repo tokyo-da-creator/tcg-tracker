@@ -944,6 +944,42 @@ main {
   opacity: 0;
 }
 
+/* ---------- Hide empty badge ---------- */
+.badge:empty { display: none; }
+
+/* ---------- No TCGplayer price warning ---------- */
+.no-prices-warn {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: rgba(61, 125, 202, 0.08);
+  border: 1px solid rgba(61, 125, 202, 0.3);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+.np-icon { font-size: 1.3rem; flex: 0 0 auto; margin-top: 1px; }
+
+.no-prices-warn strong { color: var(--accent-2); }
+
+.np-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.np-link:hover { color: var(--accent-2); }
+
 /* ---------- Sparse data warning ---------- */
 .sparse-warn {
   grid-column: 1 / -1;
