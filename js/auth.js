@@ -9,8 +9,8 @@
  * the source. A successful login sets a sessionStorage flag for the tab.
  */
 (function () {
-  const USER_HASH = "32c9cf092eec64650150d4c545f109fb0f3cae5d02f2fedec6333ce441e2c97f";
-  const PASS_HASH = "0d163a53dc49328456ecb78c6f03594c726e333d2a153440ab25bbee657fa528";
+  const USER_HASH = "f6eb3f508f935e89baa247ccec3ca4ddf445224c7962d56865826ad85d7fb05d";
+  const PASS_HASH = "50ff7b91dd8a68183d579a9e8e47ee13315381518fbcee779ad4bdfbf165891b";
   const KEY = "pokesnipr-auth";
 
   if (sessionStorage.getItem(KEY) === "1") return;
