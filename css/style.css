@@ -381,18 +381,19 @@ main {
   background: var(--bg-2);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  width: min(680px, 100%);
+  width: min(940px, 96%);
   max-height: 90vh;
   overflow: auto;
-  padding: 1.25rem;
+  padding: 1.5rem;
   position: relative;
   display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 1.25rem;
+  grid-template-columns: 270px 1fr;
+  gap: 1.75rem;
   max-width: 100%;
 }
 
-@media (max-width: 600px) { .modal { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .modal { grid-template-columns: 1fr; padding: 1rem; gap: 1rem; } }
+@media (max-width: 640px) { .modal-card-col { position: static; } }
 
 .modal .close {
   position: absolute;
@@ -1137,6 +1138,69 @@ main {
 .sig-accent-2 { background: rgba(61, 125, 202, 0.2); color: var(--accent-2); }
 
 /* ---------- Modal enhancements ---------- */
+
+/* Sticky left column — image stays in view while right side scrolls */
+.modal-card-col {
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
+/* Prominent market price below the card image */
+.modal-price-hero {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  background: rgba(24, 29, 54, 0.8);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-align: center;
+}
+.mph-label { display: block; color: var(--muted); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 0.2rem; }
+.mph-value { display: block; font-size: 1.75rem; font-weight: 800; color: var(--text); line-height: 1.1; }
+.mph-delta { display: block; font-size: 0.75rem; margin-top: 0.35rem; font-weight: 700; }
+.mph-delta.up { color: var(--up); }
+.mph-delta.down { color: var(--down); }
+
+/* Action buttons in left column */
+.modal-actions {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.modal-btn-tcg {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: rgba(61, 125, 202, 0.15);
+  border: 1px solid rgba(61, 125, 202, 0.35);
+  color: var(--accent-2);
+  transition: filter 0.15s;
+}
+.modal-btn-tcg:hover { filter: brightness(1.2); }
+
+/* Copy name button next to card title */
+.modal-title-row { display: flex; align-items: flex-start; gap: 0.3rem; flex-wrap: wrap; }
+.modal-title-row h2 { margin: 0; flex: 1 1 auto; }
+.copy-name-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.78rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 5px;
+  margin-top: 0.2rem;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.copy-name-btn:hover { color: var(--accent-2); border-color: var(--accent-2); background: rgba(61,125,202,0.08); }
+
 .modal-chart-wrap {
   margin-top: 0.9rem;
   border-top: 1px solid var(--line);

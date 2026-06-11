@@ -611,10 +611,10 @@ function openCard(card) {
     </tr>`).join("");
 
   const cm = card.cardmarket?.prices;
+  const d7  = (cm?.avg1 && cm?.avg7  && cm.avg7  > 0) ? ((cm.avg1 - cm.avg7)  / cm.avg7  * 100) : null;
+  const d30 = (cm?.avg1 && cm?.avg30 && cm.avg30 > 0) ? ((cm.avg1 - cm.avg30) / cm.avg30 * 100) : null;
   let trendHtml = "";
   if (cm && (cm.avg1 || cm.avg7 || cm.avg30 || cm.trendPrice)) {
-    const d7  = (cm.avg1 && cm.avg7  && cm.avg7  > 0) ? ((cm.avg1 - cm.avg7)  / cm.avg7  * 100) : null;
-    const d30 = (cm.avg1 && cm.avg30 && cm.avg30 > 0) ? ((cm.avg1 - cm.avg30) / cm.avg30 * 100) : null;
     const dBadge = v => v == null ? "" : `<span class="delta-mini ${v >= 0 ? "up" : "down"}">${v >= 0 ? "▲" : "▼"} ${Math.abs(v).toFixed(1)}%</span>`;
     trendHtml = `
       <div class="cm-trend-panel">
@@ -657,10 +657,26 @@ function openCard(card) {
     card.flavorText ? `<p class="card-text card-flavor">${esc(card.flavorText)}</p>` : "",
   ].join("");
 
+  const mktPrice = sp?.market ? usd(sp.market) : null;
+  const priceHero = mktPrice ? `
+    <div class="modal-price-hero">
+      <span class="mph-label">Market Price</span>
+      <span class="mph-value">${mktPrice}</span>
+      ${d7 != null ? `<span class="mph-delta ${d7 >= 0 ? "up" : "down"}">${d7 >= 0 ? "▲" : "▼"} ${Math.abs(d7).toFixed(1)}% (7d)</span>` : ""}
+    </div>` : "";
+  const tcgUrl = card.tcgplayer?.url ?? "";
+
   openModal(`
-    <div><img class="art" src="${esc(hiResImage(card.images.large || card.images.small))}" alt="${esc(card.name)}" /></div>
+    <div class="modal-card-col">
+      <img class="art" src="${esc(hiResImage(card.images.large || card.images.small))}" alt="${esc(card.name)}" />
+      ${priceHero}
+      ${tcgUrl ? `<div class="modal-actions"><a href="${esc(tcgUrl)}" target="_blank" rel="noopener" class="modal-btn-tcg">Buy on TCGplayer ↗</a></div>` : ""}
+    </div>
     <div>
-      <h2>${esc(card.name)}</h2>
+      <div class="modal-title-row">
+        <h2>${esc(card.name)}</h2>
+        <button class="copy-name-btn" title="Copy card name">⎘ Copy</button>
+      </div>
       <div class="meta">
         ${esc(card.set.name)} · #${esc(card.number)}/${esc(card.set.printedTotal)} ·
         ${esc(card.rarity ?? "Unknown rarity")} ${card.artist ? "· Illus. " + esc(card.artist) : ""}
@@ -681,6 +697,13 @@ function openCard(card) {
       </div>
     </div>
   `);
+
+  document.querySelector(".copy-name-btn")?.addEventListener("click", function () {
+    navigator.clipboard.writeText(card.name).then(() => {
+      this.textContent = "✓ Copied";
+      setTimeout(() => { this.textContent = "⎘ Copy"; }, 1500);
+    }).catch(() => {});
+  });
 
   renderModalChart(card);
 }
