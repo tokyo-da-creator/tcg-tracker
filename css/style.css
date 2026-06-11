@@ -1179,3 +1179,144 @@ main {
   .dist-bar { transition: none; }
   .sk-img, .sk-line, .sk-pill { animation: none; }
 }
+
+/* ========================================================
+   ANALYTICS FEATURES — PACK EV / HISTORY / RARITY / DELTAS
+   ======================================================== */
+
+/* ---------- Pack EV ratio badge on tile ---------- */
+.ev-ratio {
+  font-size: 0.66rem;
+  font-weight: 800;
+  border-radius: 6px;
+  padding: 0.15rem 0.4rem;
+  vertical-align: 2px;
+  letter-spacing: 0.3px;
+}
+.ev-good { background: rgba(61,220,132,0.18); color: var(--up); }
+.ev-ok   { background: rgba(255,203,5,0.15);  color: var(--accent); }
+.ev-bad  { background: rgba(255,93,93,0.18);  color: var(--down); }
+
+/* ---------- Set value history chart panel ---------- */
+.set-hist-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.set-hist-delta {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ---------- Rarity breakdown panel ---------- */
+.rb-title {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 0.5rem;
+}
+.rb-header {
+  border-bottom: 1px solid var(--line) !important;
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.1rem;
+}
+.rb-header .rb-rarity,
+.rb-header .rb-count,
+.rb-header .rb-total,
+.rb-header .rb-avg {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.rb-row {
+  display: flex;
+  align-items: center;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(42,49,88,0.35);
+  font-size: 0.82rem;
+}
+.rb-row:last-child { border-bottom: none; }
+.rb-rarity { flex: 1; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rb-count  { width: 48px; text-align: right; color: var(--muted); font-weight: 600; font-size: 0.78rem; }
+.rb-total  { width: 72px; text-align: right; color: var(--accent); font-weight: 700; }
+.rb-avg    { width: 65px; text-align: right; color: var(--muted); font-size: 0.76rem; }
+
+/* ---------- Delta badge on card tile ---------- */
+.rarity-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  overflow: hidden;
+}
+.card-delta {
+  font-size: 0.6rem;
+  font-weight: 800;
+  border-radius: 4px;
+  padding: 0.07rem 0.24rem;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.card-delta.up   { background: rgba(61,220,132,0.18); color: var(--up); }
+.card-delta.down { background: rgba(255,93,93,0.18);  color: var(--down); }
+
+/* ---------- Cardmarket delta panel in modal ---------- */
+.cm-trend-panel {
+  margin: 0.75rem 0 0.5rem;
+  background: rgba(24,29,54,0.6);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+}
+.cmt-head {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+.cmt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 0.55rem;
+}
+.cmt-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.cmt-label {
+  font-size: 0.66rem;
+  color: var(--muted);
+}
+.cmt-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.delta-mini {
+  font-size: 0.6rem;
+  font-weight: 800;
+  border-radius: 4px;
+  padding: 0.07rem 0.24rem;
+  flex: 0 0 auto;
+}
+.delta-mini.up   { background: rgba(61,220,132,0.18); color: var(--up); }
+.delta-mini.down { background: rgba(255,93,93,0.18);  color: var(--down); }
