@@ -25,7 +25,7 @@ function price(card) {
 function cardLi(card) {
   const p = price(card);
   const li = document.createElement("li");
-  li.className = `tcard ${rarityClass(`${card.rarity ?? ""} ${card.card_name ?? ""}`)}`.trim();
+  li.className = `tcard ${rarityClass(card.rarity ?? "")}`.trim();
   li.innerHTML = `
     <img loading="lazy" decoding="async" src="${esc(hiResImage(card.card_image))}" alt="${esc(card.card_name)}" />
     <div class="name">${esc(card.card_name)}</div>

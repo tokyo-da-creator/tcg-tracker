@@ -901,6 +901,7 @@ async function renderModalChart(card) {
       },
       options: {
         animation: { duration: 900, easing: "easeOutQuart" },
+        spanGaps: true,
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${usd(c.raw)}` } } },
         scales: {

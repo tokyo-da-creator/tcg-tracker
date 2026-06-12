@@ -57,8 +57,8 @@ PK_SETS_TO_SCAN = 8     # newest Pokémon sets fetched for analytics
 OP_SETS_TO_SCAN = 6     # newest One Piece main sets fetched for analytics
 SETS_TO_SNAPSHOT = 2    # newest priced sets per game tracked day-over-day
 MOVERS_TOP_N = 20
-SEALED_GROUPS_TO_SCAN = {"pokemon": 16, "onepiece": 18}
-SEALED_TOP_N = 160
+SEALED_GROUPS_TO_SCAN = {"pokemon": 30, "onepiece": 30}
+SEALED_TOP_N = 500
 SEALED_PATTERNS = re.compile(
     r"booster|elite trainer|\betb\b|bundle|box|pack|display|case|blister|tin|"
     r"collection|premium|starter deck|deck set|double pack|gift|build & battle|"
@@ -167,6 +167,8 @@ def pk_card_meta(card) -> dict:
         "name": card["name"],
         "image": card["images"].get("large") or card["images"]["small"],
         "sub": f"{card['set']['name']} · #{card['number']}",
+        "rarity": card.get("rarity") or "",
+        "number": card.get("number") or "",
     }
 
 
@@ -300,7 +302,16 @@ def op_set_analytics(s, cards):
 
 
 def featured_block(set_label, set_id, rows, release=""):
-    rows = sorted(rows, key=lambda r: r["price"], reverse=True)[:12]
+    # Sort by price descending, then dedup by card name keeping the highest-priced
+    # variant so the homepage doesn't show the same card name 3 times.
+    rows = sorted(rows, key=lambda r: r["price"], reverse=True)
+    seen_names = set()
+    deduped = []
+    for r in rows:
+        if r["name"] not in seen_names:
+            seen_names.add(r["name"])
+            deduped.append(r)
+    rows = deduped[:12]
     info = {"name": set_label, "id": set_id}
     if release:
         info["releaseDate"] = release
@@ -511,7 +522,13 @@ def fetch_sealed_products():
                 scanned += 1
 
     for game in ("pokemon", "onepiece"):
-        out[game].sort(key=lambda x: ((x.get("market") or 0), x.get("releaseDate", "")), reverse=True)
+        # Sort: newest sets first, then by market price within the same set.
+        # This ensures standard ETBs / booster boxes from recent sets aren't
+        # crowded out by expensive old cases when we apply the cap.
+        out[game].sort(
+            key=lambda x: (x.get("releaseDate", ""), x.get("market") or 0),
+            reverse=True,
+        )
         out[game] = out[game][:SEALED_TOP_N]
     return out
 

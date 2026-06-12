@@ -244,7 +244,7 @@ function renderSealedRow(data) {
   const rows = [...(data.pokemon ?? []), ...(data.onepiece ?? [])]
     .sort((a, b) => (b.market ?? 0) - (a.market ?? 0))
     .slice(0, 14);
-  label.textContent = `Cached ${rows.length} top products from ${data.source}.`;
+  label.textContent = `Cached ${rows.length} top products from ${data.source ?? "TCGCSV"}.`;
   el.innerHTML = "";
   rows.forEach((p) => el.appendChild(miniCard({
     img: p.image || p.imageThumb,

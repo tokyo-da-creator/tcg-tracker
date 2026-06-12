@@ -442,7 +442,7 @@ function renderSetsTable(analytics) {
       <td>${s.pricedCards}</td>
       <td><b>${usd(s.totalValue)}</b></td>
       <td>${usd(s.avgValue)}</td>
-      <td class="cell-card"><img loading="lazy" src="${esc(s.topCard.image)}" alt="" />${esc(s.topCard.name)} · <b>${usd(s.topCard.price)}</b></td>
+      <td class="cell-card">${s.topCard?.image ? `<img loading="lazy" src="${esc(s.topCard.image)}" alt="" />` : ""}${esc(s.topCard?.name ?? "—")} · <b>${usd(s.topCard?.price ?? 0)}</b></td>
     </tr>`).join("");
 }
 

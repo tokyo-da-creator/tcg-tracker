@@ -95,7 +95,7 @@ function filteredProducts() {
   if (sort === "market-desc") rows.sort((a, b) => (b.market ?? -1) - (a.market ?? -1));
   else if (sort === "market-asc") rows.sort((a, b) => (a.market ?? 1e9) - (b.market ?? 1e9));
   else if (sort === "release-desc") rows.sort((a, b) => (b.releaseDate ?? "").localeCompare(a.releaseDate ?? ""));
-  else rows.sort((a, b) => a.name.localeCompare(b.name));
+  else rows.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
   return rows;
 }
 

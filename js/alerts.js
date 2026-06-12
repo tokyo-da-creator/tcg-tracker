@@ -29,6 +29,7 @@ function buildConfig() {
   }).filter((t) => t.above != null || t.below != null);
 
   return {
+    restock: { enabled: el("opt-restock")?.checked !== false },
     movers: { enabled: el("opt-movers").checked, minPct: clampNum(el("movers-pct").value, 1, 90, 15) },
     sealed: { enabled: el("opt-sealed").checked, minPct: clampNum(el("sealed-pct").value, 1, 90, 10) },
     news: { enabled: el("opt-news").checked },
@@ -79,6 +80,7 @@ function applySaved() {
   if (s.movers) { el("opt-movers").checked = s.movers.enabled !== false; el("movers-pct").value = s.movers.minPct ?? 15; }
   if (s.sealed) { el("opt-sealed").checked = s.sealed.enabled !== false; el("sealed-pct").value = s.sealed.minPct ?? 10; }
   if (s.news) { el("opt-news").checked = s.news.enabled !== false; }
+  if (s.restock && el("opt-restock")) { el("opt-restock").checked = s.restock.enabled !== false; }
   if (s.watchlist) { el("opt-watch").checked = s.watchlist.enabled !== false; }
 }
 
@@ -117,8 +119,8 @@ async function sendTest() {
 }
 
 el("tg-test").addEventListener("click", sendTest);
-["opt-movers", "opt-sealed", "opt-news", "opt-watch", "movers-pct", "sealed-pct"]
-  .forEach((id) => el(id).addEventListener("input", refresh));
+["opt-restock", "opt-movers", "opt-sealed", "opt-news", "opt-watch", "movers-pct", "sealed-pct"]
+  .forEach((id) => el(id)?.addEventListener("input", refresh));
 
 el("copy-config").addEventListener("click", async () => {
   await navigator.clipboard.writeText(el("config-out").textContent);
@@ -204,7 +206,7 @@ function renderInbox() {
             <button class="aw-remove" data-id="${esc(a.id)}" title="Remove alert">✕</button>
           </div>
           <div class="aw-progress-wrap">
-            <div class="aw-progress-bar" style="width:${Math.min(85, 40 + Math.random() * 45).toFixed(0)}%;background:${color}"></div>
+            <div class="aw-progress-bar" style="width:50%;background:${color}"></div>
           </div>
           <div class="aw-progress-label"><span>Added ${esc(a.created ?? "")}</span><span>Target: ${targetLabel}</span></div>
         </div>`;

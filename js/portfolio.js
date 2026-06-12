@@ -26,7 +26,7 @@ async function pfFetchPokemonPrices(ids) {
 
 async function pfFetchHistory() {
   try {
-    const res = await fetch("data/history.json", { cache: "no-cache" });
+    const res = await fetch("data/price-history.json", { cache: "no-cache" });
     if (!res.ok) return null;
     return await res.json();
   } catch { return null; }
