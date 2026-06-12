@@ -140,7 +140,8 @@ function cardLi(card) {
 
 /* ---------- Shared sort logic ---------- */
 function getSortedCards() {
-  const sorted = [...cards];
+  const seen = new Set();
+  const sorted = cards.filter(c => seen.has(c.id) ? false : seen.add(c.id));
   const sort = sortSelect.value;
   if (sort === "price-desc" || sort === "price-asc") {
     sorted.sort((a, b) => {
