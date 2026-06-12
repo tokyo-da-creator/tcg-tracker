@@ -1735,6 +1735,11 @@ html { scroll-behavior: smooth; }
   gap: 0;
   justify-content: space-around;
   padding: 0;
+  /* Force GPU compositing layer — prevents iOS Safari from recalculating
+     position during scroll as the browser toolbar animates in/out */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .mbn-item {
