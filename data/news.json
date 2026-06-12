@@ -1,19 +1,19 @@
 {
- "updated": "2026-06-12T18:27:46+00:00",
+ "updated": "2026-06-12T23:04:44+00:00",
  "items": [
+  {
+   "source": "pokemoncenter",
+   "sourceLabel": "Pokémon Center",
+   "title": "Human Records and All Unlockable Emotes - IGN",
+   "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOLUxIalJPRkp1YzFwOVh4b00wMzY5SjFRYkE4MXhMdG9tdTVDN05aR19Cb0ZJZGdvWnlGdTFyTFhqZkRiR25NWVNfTEswNmRLMEVtTjVOWEpRc2E0MnZuc1ZLTjZtRFpVNHRRN2VTdmtrREtOWEhsWlUzWlFlc3VNSkVIRFlvMnhy?oc=5",
+   "pubDate": "Fri, 12 Jun 2026 20:00:45 GMT"
+  },
   {
    "source": "pokebeach",
    "sourceLabel": "PokeBeach",
    "title": "Shuriken Swarm — The New Decks of Chaos Rising - PokeBeach",
-   "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxOTHNQTkVtcjZQUVRack9ydWZDZGdKVE5LanFtY016bVJmbXlBT3JITWtjNG11elRya0FWODNDRUJlY2R5NzhaM0lnOFRMUV91emlaZVJwVmo1aTBhVGtGU3AyMWRqUW9Ub3NjZWJYU2ZEUTZsX0x4b3hjZEpTbWZaNlFqa2s?oc=5",
+   "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE9rTW5mYzZDczF1ZHhxSEYxZEJ3Z1p4U29kcXFhTEEzUXlzc0xBVExnNVVtNVVoWnh4Y2ZkTVhLaGR3UUV3UlhnQU5adw?oc=5",
    "pubDate": "Fri, 12 Jun 2026 17:03:18 GMT"
-  },
-  {
-   "source": "pokemoncenter",
-   "sourceLabel": "Pokémon Center",
-   "title": "Pokémon Center Taipei: Prices, Exclusives, And Booster Boxes Air India (HXijDuT58B) - Fathom Journal",
-   "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE9rUXdNN3R6cWZRUFNpZFZ3b0xvUC0wZFBtVzRTTWxpdEl1N3ExUTIxdlNkSUt5QVFTRkVXSmNMRGNqTk03ZDMtVk1wZXNoUG8yZ25na29jM1JIR3ZTNUVwMXRtYjc?oc=5",
-   "pubDate": "Fri, 12 Jun 2026 03:37:40 GMT"
   },
   {
    "source": "pokebeach",
@@ -149,13 +149,6 @@
    "pubDate": "Sat, 06 Jun 2026 16:02:14 GMT"
   },
   {
-   "source": "tcgplayer",
-   "sourceLabel": "TCGplayer",
-   "title": "The Biggest One Piece Card Price Shifts in May 2026 - TCGplayer",
-   "link": "https://news.google.com/rss/articles/CBMiywFBVV95cUxNVXU4Mk1pYkVXN05lMW9sQWpqUGF5QW1CbHBYeVRFWTRLRjlTOExLYmkwNmdkUU4xVWZmU2FpWkVjTC04eGhxLVZ5ZTd0aW8zMS1MRklvVnJGLUdpZWJoUTh0RHFidHhXVFJjMFJyNDB0NXJBOEVYT201U1ppWW50VjVEUmNQMFpka2RSOTZoa2JhQUo0X01rcUlIR1dXRGkwajE5NGhLb241OHhPcXNvUUNLYW0zZWVNOWVLVXc1eTZ6RGJEc3dVZFBPMA?oc=5",
-   "pubDate": "Thu, 04 Jun 2026 07:00:00 GMT"
-  },
-  {
    "source": "pokebeach",
    "sourceLabel": "PokeBeach",
    "title": "All 30 Classic Collection Cards from \"30th Celebration\" Likely Revealed! - PokeBeach",
@@ -189,6 +182,13 @@
    "title": "Pitch Black Elite Trainer Box - ME05: Pitch Black - Pokemon - TCGplayer",
    "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQX1RLYlJhMk5HRS1iNFUyc3N4akhLVmhzN0RBYkx6TE94dUk5UUJOTGx6MldDTDRrZUhDdlhCdGlMVzlqTmhSbVlEUHN4eFEtc2d4Y2lSZlRJejVEeWF6Z3RnVkFDSFQwajl3RjA2SmRKSGpwN0xSTHhaTldoTWJZZTJuZHZCWjl2WTRodHh3RWpkY1pMXzJsWUMtSQ?oc=5",
    "pubDate": "Sat, 02 May 2026 02:48:55 GMT"
+  },
+  {
+   "source": "tcgplayer",
+   "sourceLabel": "TCGplayer",
+   "title": "Bestselling Trading Card Games, Q1 2026 - TCGplayer",
+   "link": "https://news.google.com/rss/articles/CBMifEFVX3lxTE9EeDlUdG9zOS1FY0NMUkhZN2FYYmQ2b2R4T2R5R3RaOWFsZ0NHMzByajBEc1owQjYzYXRweENxMkh3X2NCYTY4Q3hLRWEwM25LSWZOY2d5MWFBTFAyNGRkaHpydjZkM2dseTdSelNDSV9CTnZENlZseEJ0Mko?oc=5",
+   "pubDate": "Wed, 15 Apr 2026 07:00:00 GMT"
   },
   {
    "source": "tcgplayer",
