@@ -1,0 +1,47 @@
+{
+  "_comment": "Products to monitor for restocks. Customize SKUs/TCINs for your market.",
+  "products": [
+    {
+      "name": "Prismatic Evolutions ETB",
+      "store": "target",
+      "tcin": "90325612",
+      "url": "https://www.target.com/p/pok-mon-trading-card-game-scarlet-violet-prismatic-evolutions-elite-trainer-box/-/A-90325612"
+    },
+    {
+      "name": "Prismatic Evolutions ETB",
+      "store": "walmart",
+      "item_id": "5419938397",
+      "url": "https://www.walmart.com/ip/Pokemon-Trading-Card-Game-Scarlet-Violet-Prismatic-Evolutions-Elite-Trainer-Box/5419938397"
+    },
+    {
+      "name": "Surging Sparks ETB",
+      "store": "target",
+      "tcin": "89552661",
+      "url": "https://www.target.com/p/pok-mon-trading-card-game-scarlet-violet-surging-sparks-elite-trainer-box/-/A-89552661"
+    },
+    {
+      "name": "Surging Sparks Booster Bundle",
+      "store": "target",
+      "tcin": "89552660",
+      "url": "https://www.target.com/p/pok-mon-trading-card-game-scarlet-violet-surging-sparks-booster-bundle/-/A-89552660"
+    },
+    {
+      "name": "Destined Rivals ETB",
+      "store": "target",
+      "tcin": "95026889",
+      "url": "https://www.target.com/p/pok-mon-trading-card-game-scarlet-violet-destined-rivals-elite-trainer-box/-/A-95026889"
+    },
+    {
+      "name": "Destined Rivals ETB",
+      "store": "walmart",
+      "item_id": "8053729843",
+      "url": "https://www.walmart.com/ip/Pokemon-Trading-Card-Game-Scarlet-Violet-Destined-Rivals-Elite-Trainer-Box/8053729843"
+    },
+    {
+      "name": "Prismatic Evolutions ETB",
+      "store": "pokemon_center",
+      "id": "290-85188",
+      "url": "https://www.pokemoncenter.com/en-us/product/290-85188"
+    }
+  ]
+}

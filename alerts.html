@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alerts &amp; Telegram — PokeSnipr</title>
-  <meta name="description" content="Configure PokeSnipr price, market-movement, and news alerts delivered to Telegram." />
+  <title>Alerts — PokeSnipr</title>
+  <meta name="description" content="PokeSnipr restock alerts, price movers, and push notification setup." />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3" />
   <link rel="manifest" href="site.webmanifest" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="PokeSnipr" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="stylesheet" href="css/style.css?v=20260611-pk8" />
+  <link rel="stylesheet" href="css/style.css?v=20260612-pk10" />
   <link rel="stylesheet" href="css/vault-theme.css?v=1" />
   <script src="js/auth.js?v=20260611-auth2"></script>
 </head>
@@ -36,8 +36,8 @@
 
   <main>
     <section class="hero compact">
-      <h1>Alerts &amp; Telegram</h1>
-      <p>Set price targets on cards, monitor your active watches, and configure Telegram push notifications.</p>
+      <h1>Alerts</h1>
+      <p>Restock alerts for Pokémon Center, Target &amp; Walmart — plus big price moves, news, and watchlist triggers delivered to your device.</p>
     </section>
 
     <!-- Inbox -->
@@ -52,13 +52,39 @@
       </section>
     </div>
 
+    <!-- Push notifications -->
+    <section class="panel" id="push-panel">
+      <div class="panel-head"><h2>1 · Push Notifications</h2><span class="badge badge-gold" id="push-badge">Tap to enable</span></div>
+      <p class="panel-sub">Get restock alerts and big price moves pushed directly to your phone — even when PokeSnipr isn't open. Works on iPhone (add to home screen first) and Android.</p>
+      <div class="push-how">
+        <div class="push-step">
+          <span class="push-step-num">iPhone</span>
+          <span>Tap <b>Share</b> → <b>Add to Home Screen</b>, then open the PokeSnipr app icon and enable below.</span>
+        </div>
+        <div class="push-step">
+          <span class="push-step-num">Android</span>
+          <span>Just tap Enable — notifications work immediately in Chrome.</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:1rem">
+        <button class="btn btn-buy" id="push-enable-btn" type="button" onclick="pushPromptUser()">Enable push notifications</button>
+        <p class="note" id="push-status-text" style="margin:0"></p>
+      </div>
+
+      <div class="push-setup-note" id="push-setup-note" style="display:none">
+        <p><b>Site operator setup:</b> Push notifications require a free <a href="https://onesignal.com" target="_blank" rel="noopener">OneSignal</a> account. Once you have your App ID, paste it in <code>js/push.js</code> and add your REST API Key as a GitHub secret named <code>ONESIGNAL_API_KEY</code>.</p>
+      </div>
+    </section>
+
+    <!-- Telegram -->
     <section class="panel">
-      <div class="panel-head"><h2>1 · Connect Telegram</h2><span class="badge" id="tg-status">Not connected</span></div>
+      <div class="panel-head"><h2>2 · Telegram Alerts</h2><span class="badge" id="tg-status">Not connected</span></div>
+      <p class="panel-sub">Alternative to push notifications — configure a personal Telegram bot to receive alerts. Requires setting two GitHub secrets.</p>
       <ol class="steps">
         <li>In Telegram, open <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>, send <code>/newbot</code>, and follow the prompts. Copy the <b>bot token</b> it gives you.</li>
-        <li>Send any message to your new bot so it can reply to you.</li>
+        <li><b>Send any message to your new bot</b> so it can reply to you.</li>
         <li>Open <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a> and copy your numeric <b>chat ID</b>.</li>
-        <li>Paste both below. They're used only to build your setup — they're never committed to the site.</li>
+        <li>Add both as GitHub repository secrets: <code>TELEGRAM_BOT_TOKEN</code> and <code>TELEGRAM_CHAT_ID</code>.</li>
       </ol>
       <div class="form-grid">
         <input id="tg-token" type="text" placeholder="Bot token (123456:ABC-DEF…)" autocomplete="off" />
@@ -68,8 +94,14 @@
       <p class="note" id="tg-result"></p>
     </section>
 
+    <!-- Alert types -->
     <section class="panel">
-      <div class="panel-head"><h2>2 · Choose your alerts</h2></div>
+      <div class="panel-head"><h2>3 · What to alert</h2></div>
+
+      <div class="alert-opt">
+        <label class="switch"><input type="checkbox" id="opt-restock" checked /> <span>Restock alerts</span></label>
+        <p class="panel-sub">Notify when monitored products (Prismatic Evolutions ETB, Surging Sparks, etc.) come back in stock at Pokémon Center, Target, or Walmart. Checked every 30 minutes.</p>
+      </div>
 
       <div class="alert-opt">
         <label class="switch"><input type="checkbox" id="opt-movers" checked /> <span>Big price movers</span></label>
@@ -96,8 +128,8 @@
     </section>
 
     <section class="panel">
-      <div class="panel-head"><h2>3 · Activate</h2></div>
-      <p class="panel-sub">Your choices are saved in this browser instantly. To turn on Telegram delivery, the settings below need to live in the site repo. Copy this config and commit it to <code>config/alerts.json</code> (or send it to whoever manages the site) — then add your bot token and chat ID as the GitHub secrets <code>TELEGRAM_BOT_TOKEN</code> and <code>TELEGRAM_CHAT_ID</code>.</p>
+      <div class="panel-head"><h2>4 · Telegram config export</h2></div>
+      <p class="panel-sub">Your choices are saved in this browser instantly. Copy this config and commit it to <code>config/alerts.json</code> to activate Telegram delivery.</p>
       <pre class="config-box" id="config-out"></pre>
       <div class="buy-row">
         <button class="btn btn-buy" id="copy-config" type="button">Copy config</button>
@@ -109,13 +141,14 @@
   <div id="modal-root"></div>
 
   <footer class="footer">
-    Alerts run from PokeSnipr's scheduled data job. Telegram credentials live only in GitHub Actions secrets, never in the site.
+    Restock checks run every 30 minutes via GitHub Actions. Push credentials live only in GitHub secrets, never in the site.
   </footer>
 
-  <script src="js/portfolio-store.js?v=20260612-pk9"></script>
-  <script src="js/alerts-store.js?v=20260612-pk9"></script>
-  <script src="js/common.js?v=20260612-pk9"></script>
-  <script src="js/watchlist.js?v=20260612-pk9"></script>
-  <script src="js/alerts.js?v=20260612-pk9"></script>
+  <script src="js/portfolio-store.js?v=20260612-pk10"></script>
+  <script src="js/alerts-store.js?v=20260612-pk10"></script>
+  <script src="js/common.js?v=20260612-pk10"></script>
+  <script src="js/watchlist.js?v=20260612-pk10"></script>
+  <script src="js/alerts.js?v=20260612-pk10"></script>
+  <script src="js/push.js?v=20260612-pk10"></script>
 </body>
 </html>

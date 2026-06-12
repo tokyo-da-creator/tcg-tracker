@@ -2048,3 +2048,10 @@ html { scroll-behavior: smooth; }
   .pf-tile-value { font-size: 1.5rem; }
   .header-pills .pf-pill span:not(.pf-delta) { display: none; }
 }
+
+/* ---- push notification panel (alerts.html) ---- */
+.push-how { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.75rem; }
+.push-step { display: flex; gap: 0.75rem; align-items: flex-start; font-size: 0.85rem; color: var(--muted); }
+.push-step-num { flex-shrink: 0; background: var(--accent); color: var(--bg); font-weight: 700; font-size: 0.68rem; border-radius: 6px; padding: 0.15rem 0.45rem; margin-top: 0.05rem; letter-spacing: 0.02em; }
+.badge-gold { background: rgba(232,176,75,0.12); color: var(--accent); border-color: rgba(232,176,75,0.3); }
+.push-setup-note { margin-top: 1rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid var(--line); font-size: 0.82rem; color: var(--muted); }

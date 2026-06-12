@@ -528,6 +528,182 @@ def value_history(history):
     return rows
 
 
+# ---------------------------------------------------------------- restock monitor
+
+def _check_target(product: dict):
+    """Check Target product availability via RedSky API."""
+    tcin = product.get("tcin", "")
+    if not tcin:
+        return None
+    try:
+        url = (
+            f"https://redsky.target.com/redsky_aggregations/v1/web/pdp_client_v1"
+            f"?key=9f36aeafbe60771e321a7cc95a78140772ab3e96&tcin={tcin}"
+            f"&store_id=3991&zip=10001&state=NY&latitude=40.7128&longitude=-74.0059"
+            f"&pricing_store_id=3991&has_financing_options=false"
+        )
+        data = get_json(url)
+        prod = data.get("data", {}).get("product", {})
+        status = prod.get("fulfillment", {}).get("shipping_options", {}).get("availability_status", "")
+        return status == "IN_STOCK"
+    except Exception as e:
+        print(f"warn: target check failed ({tcin}): {e}", file=sys.stderr)
+        return None
+
+
+def _check_walmart(product: dict):
+    """Check Walmart product availability via product API."""
+    item_id = product.get("item_id", "")
+    if not item_id:
+        return None
+    try:
+        url = f"https://www.walmart.com/ip/x/{item_id}"
+        req = urllib.request.Request(url, headers={**UA, "Accept": "text/html"})
+        with urllib.request.urlopen(req, timeout=20) as res:
+            body = res.read().decode("utf-8", errors="ignore")
+        if '"availabilityStatus":"IN_STOCK"' in body or '"productAvailability":"AVAILABLE"' in body:
+            return True
+        if '"availabilityStatus":"OUT_OF_STOCK"' in body or '"productAvailability":"NOT_AVAILABLE"' in body:
+            return False
+        return None
+    except Exception as e:
+        print(f"warn: walmart check failed ({item_id}): {e}", file=sys.stderr)
+        return None
+
+
+def _check_pokemon_center(product: dict):
+    """Check Pokemon Center product availability via their API."""
+    pid = product.get("id", "")
+    if not pid:
+        return None
+    try:
+        url = f"https://www.pokemoncenter.com/en-us/api/products/{pid}"
+        data = get_json(url)
+        for variant in data.get("variants", []):
+            if variant.get("available") or variant.get("orderable"):
+                return True
+        return False
+    except Exception as e:
+        print(f"warn: pokemon center check failed ({pid}): {e}", file=sys.stderr)
+        return None
+
+
+_STORE_CHECKERS = {
+    "target": _check_target,
+    "walmart": _check_walmart,
+    "pokemon_center": _check_pokemon_center,
+}
+_STORE_NAMES = {
+    "target": "Target",
+    "walmart": "Walmart",
+    "pokemon_center": "Pokémon Center",
+    "gamestop": "GameStop",
+}
+
+
+def check_restocks() -> list[str]:
+    """Check configured products for restocks. Returns alert messages for newly in-stock items."""
+    cfg_path = CONFIG / "restock-products.json"
+    if not cfg_path.exists():
+        return []
+    try:
+        cfg = json.loads(cfg_path.read_text())
+    except Exception as e:
+        print(f"warn: restock-products.json unreadable ({e})", file=sys.stderr)
+        return []
+
+    state_path = DATA / "restock-status.json"
+    if state_path.exists():
+        try:
+            state = json.loads(state_path.read_text())
+        except Exception:
+            state = {}
+    else:
+        state = {}
+
+    new_state = dict(state)
+    alerts = []
+    seeding = not state
+
+    for product in cfg.get("products", []):
+        store = product.get("store", "")
+        name = product.get("name", "Unknown")
+        url = product.get("url", "")
+        pid = product.get("id") or product.get("tcin") or product.get("item_id") or ""
+        key = f"{store}:{pid}"
+
+        checker = _STORE_CHECKERS.get(store)
+        if not checker:
+            continue
+
+        was_available = state.get(key, {}).get("available")
+        now_available = checker(product)
+        time.sleep(0.8)
+
+        new_state[key] = {
+            "available": now_available,
+            "checked": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "name": name,
+            "store": store,
+        }
+
+        if now_available is True and was_available is False and not seeding:
+            store_label = _STORE_NAMES.get(store, store)
+            msg = (
+                f"🔔 <b>RESTOCK ALERT</b>\n\n"
+                f"<b>{name}</b> is back in stock at {store_label}!\n"
+                f"🛒 <a href=\"{url}\">Grab it now →</a>"
+            )
+            alerts.append(msg)
+            print(f"restock: {name} @ {store_label} — back in stock")
+        elif now_available is None:
+            # Preserve last known state on check failure
+            new_state[key] = state.get(key, new_state[key])
+
+    state_path.write_text(json.dumps(new_state, ensure_ascii=False, indent=1))
+    if seeding:
+        print("restock: baseline state recorded (no alerts on first run)")
+    return alerts
+
+
+# ---------------------------------------------------------------- onesignal push
+
+def onesignal_send(title: str, body: str, url: str = "/alerts.html") -> bool:
+    """Send a push notification via OneSignal to all subscribers."""
+    app_id = os.environ.get("ONESIGNAL_APP_ID", "").strip()
+    api_key = os.environ.get("ONESIGNAL_API_KEY", "").strip()
+    if not app_id or not api_key:
+        return False
+    payload = json.dumps({
+        "app_id": app_id,
+        "headings": {"en": title},
+        "contents": {"en": body},
+        "url": f"https://pokesnipr.com{url}",
+        "included_segments": ["All"],
+        "chrome_web_icon": "https://pokesnipr.com/icon-192.png",
+        "chrome_web_badge": "https://pokesnipr.com/icon-192.png",
+    }).encode()
+    req = urllib.request.Request(
+        "https://onesignal.com/api/v1/notifications",
+        data=payload,
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "Authorization": f"Basic {api_key}",
+            **UA,
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as res:
+            result = json.loads(res.read())
+            ok = bool(result.get("id"))
+            if ok:
+                print(f"onesignal: push sent — {result.get('recipients', '?')} recipient(s)")
+            return ok
+    except Exception as e:
+        print(f"warn: onesignal send failed: {e}", file=sys.stderr)
+        return False
+
+
 # ---------------------------------------------------------------- telegram alerts
 
 DEFAULT_ALERTS = {
@@ -837,14 +1013,28 @@ def main():
               f"/ movers ready={movers['ready']} "
               f"/ analytics sets pk={len(pk_stats)} op={len(op_stats)}")
 
-        # Telegram alerts (no-op unless TELEGRAM_* env vars are set)
+        # Price / news alerts via Telegram (no-op unless TELEGRAM_* vars are set)
         try:
             run_alerts(movers, sealed, news)
         except Exception as e:
             print(f"warn: alerts failed: {e}", file=sys.stderr)
+
     except Exception as e:
         # News alone is still worth committing; price APIs can have bad days.
         print(f"warn: price/analytics refresh failed: {e}", file=sys.stderr)
+
+    # Restock monitor (runs even if price fetch failed — independent check)
+    try:
+        restock_msgs = check_restocks()
+        token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+        chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+        for msg in restock_msgs:
+            if token and chat_id:
+                tg_send(token, chat_id, msg)
+            first_line = msg.split("\n")[1].strip().rstrip("!") if "\n" in msg else msg
+            onesignal_send("🔔 Restock Alert", first_line, "/alerts.html")
+    except Exception as e:
+        print(f"warn: restock monitor failed: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
