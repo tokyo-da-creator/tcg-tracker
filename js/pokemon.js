@@ -658,6 +658,9 @@ function openCard(card) {
   ].join("");
 
   const mktPrice = sp?.market ? usd(sp.market) : null;
+  const mktRaw = sp?.market ?? 0;
+  const inColl = typeof pfHas === "function" && pfHas(card.id);
+  const collHolding = inColl && typeof pfGet === "function" ? pfGet(card.id) : null;
   const priceHero = mktPrice ? `
     <div class="modal-price-hero">
       <span class="mph-label">Market Price</span>
@@ -670,7 +673,11 @@ function openCard(card) {
     <div class="modal-card-col">
       <img class="art" src="${esc(hiResImage(card.images.large || card.images.small))}" alt="${esc(card.name)}" />
       ${priceHero}
-      ${tcgUrl ? `<div class="modal-actions"><a href="${esc(tcgUrl)}" target="_blank" rel="noopener" class="modal-btn-tcg">Buy on TCGplayer ↗</a></div>` : ""}
+      <div class="modal-actions">
+        ${tcgUrl ? `<a href="${esc(tcgUrl)}" target="_blank" rel="noopener" class="modal-btn-tcg">Buy on TCGplayer ↗</a>` : ""}
+        <button class="modal-btn-portfolio${inColl ? " in-collection" : ""}" id="modal-collection-btn">${inColl ? `✓ Collection (${collHolding?.qty ?? 1})` : "＋ Add to Collection"}</button>
+        <button class="modal-btn-alert" id="modal-alert-btn">🔔 Set Alert</button>
+      </div>
     </div>
     <div>
       <div class="modal-title-row">
@@ -703,6 +710,106 @@ function openCard(card) {
       this.textContent = "✓ Copied";
       setTimeout(() => { this.textContent = "⎘ Copy"; }, 1500);
     }).catch(() => {});
+  });
+
+  /* ── Add to Collection ── */
+  document.getElementById("modal-collection-btn")?.addEventListener("click", function () {
+    if (document.getElementById("modal-alert-form")) document.getElementById("modal-alert-form").remove();
+    const existing = document.getElementById("modal-collection-form");
+    if (existing) { existing.remove(); return; }
+    const h = typeof pfGet === "function" ? pfGet(card.id) : null;
+    const form = document.createElement("div");
+    form.id = "modal-collection-form";
+    form.className = "modal-mini-form";
+    form.innerHTML = `
+      <div class="mf-row">
+        <label>Qty<input type="number" id="mc-qty" min="1" max="999" value="${h?.qty ?? 1}" /></label>
+        <label>Paid / card ($)<input type="number" id="mc-cost" step="0.01" min="0" value="${h?.cost ?? (mktRaw > 0 ? mktRaw.toFixed(2) : "0")}" /></label>
+      </div>
+      <div class="mf-row mf-actions">
+        <button class="btn btn-buy" id="mc-save">Save</button>
+        ${h ? `<button class="btn btn-ghost" id="mc-remove">Remove</button>` : ""}
+        <button class="btn btn-ghost" id="mc-cancel">Cancel</button>
+      </div>`;
+    this.closest(".modal-actions").after(form);
+    document.getElementById("mc-cancel")?.addEventListener("click", () => form.remove());
+    document.getElementById("mc-remove")?.addEventListener("click", () => {
+      if (typeof removeHolding === "function") removeHolding(card.id);
+      form.remove();
+      this.textContent = "＋ Add to Collection";
+      this.classList.remove("in-collection");
+    });
+    document.getElementById("mc-save")?.addEventListener("click", () => {
+      const qty = Math.max(1, parseInt(document.getElementById("mc-qty").value) || 1);
+      const cost = Math.max(0, parseFloat(document.getElementById("mc-cost").value) || 0);
+      if (typeof setHolding === "function") {
+        setHolding(card.id, qty, cost, {
+          game: "pokemon",
+          name: card.name,
+          image: card.images?.small ?? "",
+          set: card.set?.name ?? "",
+          rarity: card.rarity ?? "",
+          lastPrice: mktRaw || 0,
+        });
+      }
+      form.remove();
+      this.textContent = `✓ Collection (${qty})`;
+      this.classList.add("in-collection");
+    });
+  });
+
+  /* ── Set Alert ── */
+  document.getElementById("modal-alert-btn")?.addEventListener("click", function () {
+    if (document.getElementById("modal-collection-form")) document.getElementById("modal-collection-form").remove();
+    const existing = document.getElementById("modal-alert-form");
+    if (existing) { existing.remove(); return; }
+    const existingAlerts = typeof alertsForCard === "function" ? alertsForCard(card.id) : [];
+    const kindLabel = { "price-below": "Below", "price-above": "Above", "pct-move": "% Move" };
+    const form = document.createElement("div");
+    form.id = "modal-alert-form";
+    form.className = "modal-alert-form";
+    form.innerHTML = `
+      <div class="maf-tabs">
+        <button class="maf-tab active" data-kind="price-below">Below</button>
+        <button class="maf-tab" data-kind="price-above">Above</button>
+        <button class="maf-tab" data-kind="pct-move">% Move</button>
+      </div>
+      <div class="maf-input">
+        <input type="number" id="ma-target" step="0.01" min="0" placeholder="Target $" value="${mktRaw > 0 ? mktRaw.toFixed(2) : ""}" />
+        <button class="btn btn-buy" id="ma-save">Set</button>
+        <button class="btn btn-ghost" id="ma-cancel">✕</button>
+      </div>
+      ${existingAlerts.length ? `<div class="maf-chips">${existingAlerts.map(a =>
+        `<span class="maf-chip">${esc(kindLabel[a.kind] ?? a.kind)}: ${a.kind === "pct-move" ? a.target + "%" : "$" + a.target.toFixed(2)} <button class="chip-x" data-alert-id="${esc(a.id)}">✕</button></span>`
+      ).join("")}</div>` : ""}`;
+    this.closest(".modal-actions").after(form);
+    let activeKind = "price-below";
+    form.querySelectorAll(".maf-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        activeKind = tab.dataset.kind;
+        form.querySelectorAll(".maf-tab").forEach(t => t.classList.toggle("active", t === tab));
+        const inp = document.getElementById("ma-target");
+        if (!inp) return;
+        if (activeKind === "pct-move") { inp.placeholder = "Min % move (e.g. 10)"; inp.value = "10"; }
+        else { inp.placeholder = "Target $"; if (mktRaw > 0) inp.value = mktRaw.toFixed(2); }
+      });
+    });
+    document.getElementById("ma-cancel")?.addEventListener("click", () => form.remove());
+    document.getElementById("ma-save")?.addEventListener("click", () => {
+      const target = parseFloat(document.getElementById("ma-target").value);
+      if (isNaN(target) || target <= 0) return;
+      if (typeof addAlert === "function") {
+        addAlert({ kind: activeKind, cardId: card.id, cardName: card.name, cardImage: card.images?.small ?? "", target });
+      }
+      form.remove();
+      this.textContent = "🔔 Alert set ✓";
+    });
+    form.querySelectorAll(".chip-x").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (typeof removeAlert === "function") removeAlert(btn.dataset.alertId);
+        btn.closest(".maf-chip")?.remove();
+      });
+    });
   });
 
   renderModalChart(card);

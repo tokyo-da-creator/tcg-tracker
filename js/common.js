@@ -429,6 +429,7 @@ function _injectMobileNav() {
     { href: "pokemon.html",   id: "pokemon",  label: "Pokémon",  icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="3"/></svg>` },
     { href: "onepiece.html",  id: "onepiece", label: "OP",       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>` },
     { href: "news.html",      id: "news",     label: "News",     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a4 4 0 0 1-4 4z"/><line x1="10" y1="7" x2="18" y2="7"/><line x1="10" y1="11" x2="18" y2="11"/><line x1="10" y1="15" x2="14" y2="15"/></svg>` },
+    { href: "portfolio.html", id: "portfolio", label: "Portfolio", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>` },
     { href: "alerts.html",    id: "alerts",   label: "Alerts",   icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` },
   ];
   const nav = document.createElement("nav");
@@ -450,6 +451,43 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+function _injectHeaderPills() {
+  const header = document.querySelector(".header");
+  if (!header || document.querySelector(".header-pills")) return;
+  const hasPf = typeof pfAll === "function";
+  const hasAlerts = typeof alertsUnreadCount === "function";
+  if (!hasPf && !hasAlerts) return;
+  const wrap = document.createElement("div");
+  wrap.className = "header-pills";
+  if (hasPf) {
+    const holdings = pfAll();
+    if (holdings.length > 0) {
+      const total = typeof pfQuickTotal === "function" ? pfQuickTotal() : 0;
+      const pill = document.createElement("a");
+      pill.href = "portfolio.html";
+      pill.className = "pf-pill";
+      pill.title = "Portfolio";
+      pill.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>${total > 0 ? usd(total) : `${holdings.length} card${holdings.length !== 1 ? "s" : ""}`}`;
+      wrap.appendChild(pill);
+    }
+  }
+  if (hasAlerts) {
+    const unread = alertsUnreadCount();
+    const bell = document.createElement("a");
+    bell.href = "alerts.html";
+    bell.className = "alerts-bell";
+    bell.title = "Alerts";
+    bell.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>${unread > 0 ? `<span class="bell-badge">${unread > 9 ? "9+" : unread}</span>` : ""}`;
+    wrap.appendChild(bell);
+  }
+  if (wrap.children.length) {
+    const searchBtn = header.querySelector(".search-btn");
+    if (searchBtn) header.insertBefore(wrap, searchBtn);
+    else header.appendChild(wrap);
+  }
+}
+
 _injectSearchOverlay();
 _injectSearchButton();
 _injectMobileNav();
+_injectHeaderPills();

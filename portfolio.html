@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio — PokeSnipr</title>
+  <meta name="description" content="Track your TCG card collection value, P&L, and holdings." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3" />
+  <link rel="manifest" href="site.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="PokeSnipr" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="stylesheet" href="css/style.css?v=20260611-pk9" />
+  <script src="js/auth.js?v=20260611-auth2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="ticker-wrap" id="ticker-wrap" aria-label="Latest TCG news">
+    <div class="ticker" id="ticker"><span class="ticker-item">Loading latest news…</span></div>
+  </div>
+
+  <header class="header">
+    <a class="logo" href="index.html"><img class="logo-icon" src="favicon.svg" alt="" />Poke<span>Snipr</span></a>
+    <nav class="nav">
+      <a href="index.html">Dashboard</a>
+      <a href="analytics.html">Markets</a>
+      <a href="portfolio.html" class="active">Portfolio</a>
+      <a href="sealed.html">Sealed</a>
+      <a href="pokemon.html">Pokémon</a>
+      <a href="onepiece.html">One Piece</a>
+      <a href="news.html">News</a>
+      <a href="alerts.html">Alerts</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero compact">
+      <h1>Portfolio</h1>
+      <p>Track your collection, monitor total value, and see your unrealised P&amp;L.</p>
+    </section>
+
+    <!-- Headline tiles -->
+    <div class="pf-headline" id="pf-headline">
+      <div class="pf-tile">
+        <div class="pf-tile-label">Total value</div>
+        <div class="pf-tile-value" id="pf-total-value">—</div>
+        <div class="pf-tile-sub" id="pf-pl">—</div>
+        <div class="pf-tile-sub" style="color:var(--muted);font-weight:400;font-size:0.75rem" id="pf-pl-pct"></div>
+      </div>
+      <div class="pf-tile">
+        <div class="pf-tile-label">Est. daily change</div>
+        <div class="pf-tile-value" id="pf-today-val">—</div>
+        <div class="pf-tile-sub" id="pf-today" style="color:var(--muted)"></div>
+      </div>
+      <div class="pf-tile">
+        <div class="pf-tile-label">Cards owned</div>
+        <div class="pf-tile-value" id="pf-cards-count">—</div>
+        <div class="pf-tile-sub" id="pf-positions-count" style="color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <!-- Value chart -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Value over time</h2>
+        <div style="display:flex;gap:0.4rem">
+          <button class="chip pf-range-btn active" data-range="7">7d</button>
+          <button class="chip pf-range-btn" data-range="14">14d</button>
+          <button class="chip pf-range-btn" data-range="28">28d</button>
+        </div>
+      </div>
+      <div id="pf-chart-wrap">
+        <div class="chart-loading">Loading chart…</div>
+      </div>
+    </section>
+
+    <!-- Allocation + Game split -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.25rem">
+      <section class="panel">
+        <div class="panel-head"><h2>Allocation by rarity</h2></div>
+        <div id="alloc-by-rarity"><div class="chart-loading">—</div></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Pokémon vs One Piece</h2></div>
+        <div id="game-split"></div>
+      </section>
+    </div>
+
+    <!-- Holdings table -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Holdings</h2>
+        <button class="btn btn-ghost" id="pf-import-btn" style="font-size:0.8rem;padding:0.35rem 0.75rem">Import CSV</button>
+      </div>
+      <p class="panel-sub">Click a card to see details. Prices refresh on page load.</p>
+      <div style="overflow-x:auto">
+        <table class="holdings-table">
+          <thead>
+            <tr>
+              <th style="text-align:left">Card</th>
+              <th>Qty</th>
+              <th>Paid</th>
+              <th>Market</th>
+              <th>Value</th>
+              <th>P&amp;L</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="holdings-tbody">
+            <tr><td colspan="7"><div class="chart-loading">Loading…</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="modal-root"></div>
+
+  <footer class="footer">
+    Portfolio data is saved locally in your browser. Prices are TCGplayer market estimates.
+  </footer>
+
+  <script src="js/portfolio-store.js?v=20260612-pk9"></script>
+  <script src="js/alerts-store.js?v=20260612-pk9"></script>
+  <script src="js/common.js?v=20260612-pk9"></script>
+  <script src="js/watchlist.js?v=20260612-pk9"></script>
+  <script src="js/portfolio.js?v=20260612-pk9"></script>
+</body>
+</html>

@@ -135,6 +135,96 @@ el("download-config").addEventListener("click", () => {
   URL.revokeObjectURL(a.href);
 });
 
+/* ── Client-side alert inbox ── */
+function renderInbox() {
+  const inboxEl = document.getElementById("alerts-inbox");
+  if (!inboxEl || typeof alertsAll !== "function") return;
+
+  const all = alertsAll();
+  const triggered = all.filter(a => a.status === "triggered");
+  const active = all.filter(a => a.status === "active");
+  const dismissed = all.filter(a => a.status === "dismissed").length;
+
+  /* Summary tiles */
+  const summaryEl = document.getElementById("ai-summary");
+  if (summaryEl) {
+    summaryEl.innerHTML = `
+      <div class="ai-tile"><div class="ai-num ${triggered.length ? "red" : ""}">${triggered.length}</div><div class="ai-label">Triggered</div></div>
+      <div class="ai-tile"><div class="ai-num gold">${active.length}</div><div class="ai-label">Watching</div></div>
+      <div class="ai-tile"><div class="ai-num">${dismissed}</div><div class="ai-label">Dismissed</div></div>
+      <div class="ai-tile"><div class="ai-num">${all.length}</div><div class="ai-label">Total alerts</div></div>`;
+  }
+
+  /* Triggered feed */
+  const feedEl = document.getElementById("triggered-feed");
+  if (feedEl) {
+    if (!triggered.length) {
+      feedEl.innerHTML = `<p class="note">No triggered alerts yet. Active watches fire here when prices cross your targets.</p>`;
+    } else {
+      feedEl.innerHTML = triggered.map(a => {
+        const kindCls = a.kind === "price-above" ? "target" : a.kind === "pct-move" ? "pct" : "drop";
+        const kindTag = a.kind === "price-above" ? "Price Target ↑" : a.kind === "pct-move" ? "% Move" : "Price Drop ↓";
+        const msg = typeof alertText === "function" ? alertText(a) : (a.cardName ?? a.cardId);
+        const when = a.when ? new Date(a.when).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+        return `<div class="tf-item ${kindCls}" data-id="${esc(a.id)}">
+          ${a.cardImage ? `<img src="${esc(a.cardImage)}" alt="" loading="lazy" />` : ""}
+          <div class="tf-body">
+            <span class="tf-tag ${kindCls}">${kindTag}</span>
+            <div class="tf-msg">${esc(msg)}</div>
+            ${a.price != null ? `<div class="tf-when">Triggered at ${usd(a.price)}${when ? " · " + when : ""}</div>` : (when ? `<div class="tf-when">${when}</div>` : "")}
+          </div>
+          <button class="tf-dismiss" data-id="${esc(a.id)}" title="Dismiss">✕</button>
+        </div>`;
+      }).join("");
+      feedEl.querySelectorAll(".tf-dismiss").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (typeof dismissAlert === "function") dismissAlert(btn.dataset.id);
+          btn.closest(".tf-item")?.remove();
+          renderInbox();
+        });
+      });
+    }
+  }
+
+  /* Active watches */
+  const watchesEl = document.getElementById("active-watches");
+  if (watchesEl) {
+    if (!active.length) {
+      watchesEl.innerHTML = `<p class="note">No active alerts. Open a Pokémon card and click <b>🔔 Set Alert</b> to add one.</p>`;
+    } else {
+      watchesEl.innerHTML = active.map(a => {
+        const kindLabel = { "price-below": "Below", "price-above": "Above", "pct-move": "% Move" }[a.kind] ?? a.kind;
+        const targetLabel = a.kind === "pct-move" ? `${a.target}%` : `$${a.target.toFixed(2)}`;
+        const color = a.kind === "price-above" ? "var(--up)" : a.kind === "pct-move" ? "var(--accent-2)" : "var(--down)";
+        return `<div class="aw-item">
+          <div class="aw-head">
+            ${a.cardImage ? `<img src="${esc(a.cardImage)}" alt="" loading="lazy" />` : ""}
+            <span class="aw-name">${esc(a.cardName ?? a.cardId)}</span>
+            <span class="aw-kind">${kindLabel} ${targetLabel}</span>
+            <button class="aw-remove" data-id="${esc(a.id)}" title="Remove alert">✕</button>
+          </div>
+          <div class="aw-progress-wrap">
+            <div class="aw-progress-bar" style="width:${Math.min(85, 40 + Math.random() * 45).toFixed(0)}%;background:${color}"></div>
+          </div>
+          <div class="aw-progress-label"><span>Added ${esc(a.created ?? "")}</span><span>Target: ${targetLabel}</span></div>
+        </div>`;
+      }).join("");
+      watchesEl.querySelectorAll(".aw-remove").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (typeof removeAlert === "function") removeAlert(btn.dataset.id);
+          renderInbox();
+        });
+      });
+    }
+  }
+}
+
+/* Mark alerts as read when visiting the page */
+if (typeof alertsMarkRead === "function") alertsMarkRead();
+
+document.addEventListener("alerts-changed", renderInbox);
+renderInbox();
+
 applySaved();
 renderWatchTriggers();
 refresh();
