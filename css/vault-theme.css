@@ -1,0 +1,238 @@
+/* ===================================================================
+   PokeSnipr — "Card Vault" theme overlay
+   -------------------------------------------------------------------
+   ADDITIVE skin. Load this AFTER css/style.css on every page:
+       <link rel="stylesheet" href="css/style.css?v=..." />
+       <link rel="stylesheet" href="css/vault-theme.css?v=1" />
+   It only overrides tokens + adds polish. No HTML or JS changes needed.
+   To revert: remove the one <link> line. Nothing else to undo.
+   =================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* ---------- 1. palette tokens (drives the whole site) ---------- */
+:root {
+  --bg: #0d0b10;
+  --bg-2: #141017;
+  --card: #1f1924;
+  --card-hover: #2a2230;
+  --line: rgba(232, 176, 75, 0.16);
+  --text: #f5efe4;
+  --muted: #b6a99c;
+  --accent: #e8b04b;     /* gold */
+  --accent-2: #b98bff;   /* violet */
+  --up: #62d39a;
+  --down: #ff7b7b;
+  --radius: 16px;
+  --vault-ink: #241803;  /* text on gold */
+}
+/* One Piece pages (body.theme-op) get a ruby/amber accent */
+.theme-op {
+  --accent: #e5536a;
+  --accent-2: #f0a35c;
+  --vault-ink: #2a0509;
+}
+
+/* ---------- 2. ambient background + film grain ---------- */
+body {
+  background:
+    radial-gradient(1100px 520px at 80% -8%, rgba(232, 176, 75, 0.10), transparent 60%),
+    radial-gradient(900px 520px at 6% 2%, rgba(185, 139, 255, 0.08), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+.theme-op body,
+body.theme-op {
+  background:
+    radial-gradient(1100px 520px at 80% -8%, rgba(229, 83, 106, 0.12), transparent 60%),
+    radial-gradient(900px 520px at 6% 2%, rgba(240, 163, 92, 0.08), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.3;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+}
+/* keep sticky header above the grain so it stays crisp */
+.header { z-index: 20; }
+
+/* ---------- 3. typography ---------- */
+.logo,
+.hero h1,
+.panel h2,
+.modal h2,
+.tile .t-value {
+  font-family: 'Spectral', Georgia, 'Times New Roman', serif;
+}
+.hero h1 { font-weight: 600; letter-spacing: -0.01em; }
+.panel h2,
+.modal h2 { font-weight: 600; }
+
+/* tabular numerals everywhere a price/percent lives */
+.tcard .price,
+.tile .t-value,
+.delta, .card-delta, .delta-mini, .tile-delta,
+.price-table td, .price-table .mkt,
+.mover .m-price, .m-price,
+.freshness {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.tile .t-value { font-weight: 700; letter-spacing: -0.02em; }
+
+/* ---------- 4. brand mark ---------- */
+.logo {
+  font-weight: 700;
+  background: linear-gradient(120deg, #f6d588, #e8b04b 50%, #f6d588);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.theme-op .logo { background: linear-gradient(120deg, #ffb3a0, #e5536a 50%, #ffb3a0); -webkit-background-clip: text; background-clip: text; }
+.logo span { -webkit-text-fill-color: var(--accent-2); color: var(--accent-2); }
+
+/* ---------- 5. header: glass + gold hairline ---------- */
+.header {
+  background: linear-gradient(180deg, rgba(20, 16, 23, 0.92), rgba(13, 11, 16, 0.8));
+  border-bottom-color: var(--line);
+}
+.header::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232, 176, 75, 0.5), transparent);
+}
+.nav a.active { background: var(--card); border-color: var(--line); }
+.nav a { transition: color 0.16s, background 0.16s; }
+.nav a:hover { color: var(--accent); background: transparent; }
+.nav a.active { color: var(--text); box-shadow: inset 0 0 0 1px rgba(232, 176, 75, 0.18); }
+.theme-op .nav a:hover { color: var(--accent); }
+
+/* ---------- 6. panels: glass, soft shadow, gold dot on titles ---------- */
+.panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 30%),
+    var(--bg-2);
+  border-color: var(--line);
+  box-shadow: 0 30px 70px -42px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+}
+.panel:hover { border-color: rgba(232, 176, 75, 0.28); }
+.panel h2 { position: relative; }
+.panel { position: relative; transition: border-color 0.2s, box-shadow 0.2s; }
+/* faint gold light catching the top edge of each panel */
+.panel::before {
+  content: '';
+  position: absolute;
+  left: 14%; right: 14%; top: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232, 176, 75, 0.35), transparent);
+  pointer-events: none;
+}
+.panel h2::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin-right: 0.55rem;
+  vertical-align: middle;
+  background: var(--accent);
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.more { color: var(--accent-2); }
+
+/* ---------- 7. cards: gold price, hover sheen ---------- */
+.tcard { position: relative; background: var(--card); }
+.tcard img { background: #141017; }
+.tcard .price { color: var(--accent); font-weight: 700; }
+.tcard:hover { border-color: var(--accent); background: var(--card-hover); }
+.tcard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.1) 48%, transparent 60%);
+  transition: opacity 0.3s;
+  z-index: 2;
+}
+.tcard:hover::after { opacity: 1; }
+
+/* ---------- 8. tiles & movers ---------- */
+.tile {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 42%),
+    var(--bg-2);
+  border-color: var(--line);
+}
+.tile:hover { border-color: rgba(232, 176, 75, 0.3); box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.7); }
+.mover { background: var(--card); }
+.mover:hover { border-color: var(--accent); }
+
+/* ---------- 9. modal (card detail): glass ---------- */
+.modal {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 26%),
+    color-mix(in srgb, var(--bg-2) 94%, transparent);
+  border-color: var(--line);
+  box-shadow: 0 50px 110px -34px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(18px);
+}
+.price-table .mkt { color: var(--accent); }
+
+/* ---------- 10. buttons & chips ---------- */
+.load-more {
+  background: linear-gradient(180deg, #f1c869, #e0a93a);
+  color: var(--vault-ink);
+  font-weight: 700;
+}
+.theme-op .load-more { background: linear-gradient(180deg, #f08a96, #e5536a); color: #fff; }
+.load-more:hover { filter: brightness(1.06); }
+.btn-ghost:hover { border-color: var(--accent); }
+.chip.active { background: var(--accent); border-color: var(--accent); color: var(--vault-ink); }
+
+/* ---------- 11. misc polish ---------- */
+a { color: var(--accent-2); }
+.badge { border-color: var(--line); }
+::selection { background: rgba(232, 176, 75, 0.3); color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tcard::after { transition: none; }
+}
+
+/* ---------- 12. refinements: scrollbar, focus, smoothing ---------- */
+.tcard, .tile, .mover, .btn, .load-more, .chip, .more { transition: color 0.16s, background 0.16s, border-color 0.16s, transform 0.16s, box-shadow 0.16s; }
+
+/* gold focus ring for keyboard users */
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, .tcard:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* themed scrollbars */
+* { scrollbar-color: rgba(232, 176, 75, 0.4) transparent; scrollbar-width: thin; }
+.row-scroll::-webkit-scrollbar, .card-table-wrap::-webkit-scrollbar, body::-webkit-scrollbar { height: 9px; width: 9px; }
+.row-scroll::-webkit-scrollbar-thumb, .card-table-wrap::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: rgba(232, 176, 75, 0.35); border-radius: 99px; }
+.row-scroll::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover { background: rgba(232, 176, 75, 0.55); }
+.theme-op * { scrollbar-color: rgba(229, 83, 106, 0.4) transparent; }
+
+/* the freshness line gets a small live dot */
+.freshness::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+  background: var(--up);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--up) 22%, transparent);
+}
