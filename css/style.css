@@ -398,16 +398,25 @@ main {
 
 .modal .close {
   position: absolute;
-  top: 0.4rem;
-  right: 0.7rem;
-  background: none;
+  top: 0.5rem;
+  right: 0.6rem;
+  z-index: 20;
+  background: rgba(0,0,0,0.45);
   border: none;
-  color: var(--muted);
-  font-size: 1.7rem;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  font-size: 1.2rem;
+  line-height: 1;
   cursor: pointer;
 }
 
-.modal img.art { width: 100%; border-radius: 10px; }
+.modal img.art { width: 100%; border-radius: 10px; touch-action: manipulation; }
+.modal { touch-action: pan-y; }
 .modal h2 { margin: 0 0 0.2rem; font-size: 1.25rem; }
 .modal .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem; }
 
@@ -839,8 +848,10 @@ main {
   }
 
   .modal img.art {
-    max-height: 55vh;
-    object-fit: contain;
+    width: min(200px, 60%);
+    height: auto;
+    margin: 0 auto;
+    display: block;
   }
 }
 
@@ -1145,11 +1156,14 @@ main {
 
 /* ---------- Modal enhancements ---------- */
 
-/* Sticky left column — image stays in view while right side scrolls */
-.modal-card-col {
-  position: sticky;
-  top: 0;
-  align-self: start;
+/* Sticky left column — image stays in view while right side scrolls (desktop only).
+   Mobile uses static flow so the card never overlaps scrolling content. */
+@media (min-width: 641px) {
+  .modal-card-col {
+    position: sticky;
+    top: 0;
+    align-self: start;
+  }
 }
 
 /* Prominent market price below the card image */
