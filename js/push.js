@@ -8,7 +8,7 @@
  * 5. That's it — users will see a "Allow notifications" prompt.
  */
 
-const ONESIGNAL_APP_ID = ""; // ← paste your App ID here after signing up
+const ONESIGNAL_APP_ID = "c5be86ef-368d-4cd3-afcd-4ab350d7b8b7";
 
 const PUSH_PREFS_KEY = "ps_push_prefs";
 
