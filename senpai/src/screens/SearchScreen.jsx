@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ANIME, CHARACTERS, GENRES, SEASONS, STUDIOS, TRENDING_SEARCHES, accentFor, fmt } from '../data.js';
+import { searchAniList } from '../lib/anilist.js';
+import { useLibrary } from '../contexts/LibraryContext.jsx';
 import Art from '../components/Art.jsx';
 import Chip from '../components/Chip.jsx';
 import Poster from '../components/Poster.jsx';
@@ -26,11 +28,11 @@ function RankRow({ a, rank, onClick }) {
     <div className="tap" onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '9px 0' }}>
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: rank <= 3 ? 'var(--accent)' : 'var(--txt-faint)', width: 24, textAlign: 'center' }}>{rank}</span>
       <div style={{ width: 44, height: 60, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
-        <Art seed={a.id} hue={a.hue} title={a.title} showTitle ratio="2 / 3" />
+        <Art seed={a.id} hue={a.hue} title={a.title} showTitle ratio="2 / 3" imgUrl={a.cover || undefined} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.title}</div>
-        <div style={{ fontSize: 11.5, color: 'var(--txt-faint)', marginTop: 2 }}>{a.format} · {a.episodes} eps · {a.studio}</div>
+        <div style={{ fontSize: 11.5, color: 'var(--txt-faint)', marginTop: 2 }}>{a.format} · {a.episodes ? a.episodes + ' eps' : '?'} · {a.studio}</div>
       </div>
       <ScoreBadge score={a.score} />
     </div>
@@ -41,7 +43,7 @@ function FLabel({ children }) {
   return <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: 1, color: 'var(--txt-faint)', textTransform: 'uppercase', marginBottom: 11 }}>{children}</div>;
 }
 
-function FilterSheet({ open, onClose, sel, setSel, sort, setSort }) {
+function FilterSheet({ open, onClose, sel, setSel, sort, setSort, season, setSeason }) {
   const toggle = g => setSel(s => s.includes(g) ? s.filter(x => x !== g) : [...s, g]);
   return (
     <Sheet open={open} onClose={onClose} title="Filters">
@@ -52,7 +54,7 @@ function FilterSheet({ open, onClose, sel, setSel, sort, setSort }) {
         </div>
         <FLabel>Season</FLabel>
         <div className="hscroll" style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-          {SEASONS.map(s => <Chip key={s}>{s}</Chip>)}
+          {SEASONS.map(s => <Chip key={s} active={season === s} onClick={() => setSeason(p => p === s ? null : s)}>{s}</Chip>)}
         </div>
         <FLabel>Studio</FLabel>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
@@ -69,20 +71,45 @@ function FilterSheet({ open, onClose, sel, setSel, sort, setSort }) {
 }
 
 export default function SearchScreen({ nav }) {
+  const library = useLibrary();
   const [q, setQ] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [sel, setSel] = useState([]);
   const [sort, setSort] = useState('Popularity');
+  const [season, setSeason] = useState(null);
+  const [focused, setFocused] = useState(false);
 
-  const ranked = [...ANIME].sort((a, b) => b.score - a.score);
-  let results = [...ANIME];
-  if (q) results = results.filter(a => (a.title + a.alt + a.genres.join() + a.studio).toLowerCase().includes(q.toLowerCase()));
-  if (sel.length) results = results.filter(a => a.genres.some(g => sel.includes(g)));
-  if (sort === 'Score') results = [...results].sort((a, b) => b.score - a.score);
-  else if (sort === 'Newest') results = [...results].sort((a, b) => b.year - a.year);
-  else if (sort === 'A–Z') results = [...results].sort((a, b) => a.title.localeCompare(b.title));
+  // AniList live search
+  const [aniResults, setAniResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const timerRef = useRef(null);
 
   const searching = q.length > 0 || sel.length > 0;
+
+  useEffect(() => {
+    if (!searching) { setAniResults([]); return; }
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
+      setLoading(true);
+      const results = await searchAniList(q, sel);
+      setAniResults(results);
+      setLoading(false);
+    }, 380);
+    return () => clearTimeout(timerRef.current);
+  }, [q, sel]);
+
+  // Apply sort to results
+  let results = [...aniResults];
+  if (sort === 'Score') results.sort((a, b) => b.score - a.score);
+  else if (sort === 'Newest') results.sort((a, b) => b.year - a.year);
+  else if (sort === 'A–Z') results.sort((a, b) => a.title.localeCompare(b.title));
+
+  const ranked = [...ANIME].sort((a, b) => b.score - a.score);
+
+  const handleResultClick = (a) => {
+    library.addAnime(a);
+    nav.push('detail', { id: a.id });
+  };
 
   return (
     <div className="scroll" style={{ height: '100%', paddingBottom: 96 }}>
@@ -90,9 +117,16 @@ export default function SearchScreen({ nav }) {
       <div style={{ position: 'sticky', top: 0, zIndex: 30, padding: '52px 18px 12px', background: 'linear-gradient(to bottom, var(--ink-0) 70%, transparent)' }}>
         <h1 style={{ margin: '0 0 14px', fontSize: 30, fontWeight: 900, letterSpacing: -0.8 }}>Discover</h1>
         <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 9, background: 'var(--ink-2)', border: '1px solid var(--line)', borderRadius: 14, padding: '0 13px', height: 46 }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 9, background: 'var(--ink-2)', border: '1px solid ' + (focused ? 'var(--accent)' : 'var(--line)'), borderRadius: 14, padding: '0 13px', height: 46, boxShadow: focused ? '0 0 0 3px var(--accent-soft)' : 'none', transition: 'border-color .15s, box-shadow .15s' }}>
             <Icon name="search" size={19} color="var(--txt-faint)" />
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search anime, characters, studios" style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--txt)', fontSize: 15, fontFamily: 'var(--font-sans)' }} />
+            <input
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              placeholder="Search any anime…"
+              style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--txt)', fontSize: 15, fontFamily: 'var(--font-sans)' }}
+            />
             {q ? <div className="tap" onClick={() => setQ('')}><Icon name="x" size={18} color="var(--txt-faint)" /></div> : <Icon name="mic" size={19} color="var(--accent)" />}
           </div>
           <div className="tap" onClick={() => setFilterOpen(true)} style={{ width: 46, height: 46, borderRadius: 14, background: sel.length ? 'var(--accent)' : 'var(--ink-2)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', color: sel.length ? '#fff' : 'var(--txt)' }}>
@@ -103,19 +137,33 @@ export default function SearchScreen({ nav }) {
       </div>
 
       {searching ? (
-        <div style={{ padding: '4px 18px 0', animation: 'fadeIn .25s both' }}>
+        <div style={{ padding: '4px 18px 0', animation: 'fadeIn .2s both' }}>
+          {/* Result count + sort */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '6px 2px 14px' }}>
-            <span style={{ fontSize: 13, color: 'var(--txt-dim)' }}>{results.length} result{results.length !== 1 ? 's' : ''}{sel.length ? ' · ' + sel.join(', ') : ''}</span>
-            <span style={{ fontSize: 13, color: 'var(--txt-faint)', display: 'flex', alignItems: 'center', gap: 4 }}>{sort}<Icon name="chevD" size={14} /></span>
+            <span style={{ fontSize: 13, color: 'var(--txt-dim)' }}>
+              {loading ? 'Searching…' : `${results.length} result${results.length !== 1 ? 's' : ''}${sel.length ? ' · ' + sel.join(', ') : ''}`}
+            </span>
+            <span className="tap" onClick={() => setFilterOpen(true)} style={{ fontSize: 13, color: 'var(--txt-faint)', display: 'flex', alignItems: 'center', gap: 4 }}>{sort}<Icon name="chevD" size={14} /></span>
           </div>
-          {results.length === 0 ? (
+
+          {loading ? (
+            /* Skeleton grid */
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 13 }}>
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div key={i} style={{ borderRadius: 14, overflow: 'hidden', aspectRatio: '2/3', background: 'var(--ink-2)', animation: 'pulse 1.4s ease-in-out infinite', animationDelay: i * 0.06 + 's' }} />
+              ))}
+            </div>
+          ) : results.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--txt-faint)' }}>
               <Icon name="search" size={40} color="var(--txt-faint)" style={{ margin: '0 auto 12px' }} />
               <div style={{ fontSize: 15 }}>No results for "{q}"</div>
+              <div style={{ fontSize: 13, marginTop: 6 }}>Try a different title or check spelling</div>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 13 }}>
-              {results.map(a => <Poster key={a.id} anime={a} width="100%" onClick={() => nav.push('detail', { id: a.id })} />)}
+              {results.map(a => (
+                <Poster key={a.id} anime={a} width="100%" onClick={() => handleResultClick(a)} />
+              ))}
             </div>
           )}
         </div>
@@ -168,7 +216,7 @@ export default function SearchScreen({ nav }) {
         </div>
       )}
 
-      <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} sel={sel} setSel={setSel} sort={sort} setSort={setSort} />
+      <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} sel={sel} setSel={setSel} sort={sort} setSort={setSort} season={season} setSeason={setSeason} />
     </div>
   );
 }

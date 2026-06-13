@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ANIME, byId, CHARACTERS, REVIEWS, DISCUSSIONS, LIST_STATUS, userBy, accentFor, fmt } from '../data.js';
 import { useToast } from '../components/Toast.jsx';
+import { useLibrary } from '../contexts/LibraryContext.jsx';
 import Art from '../components/Art.jsx';
 import Avatar from '../components/Avatar.jsx';
 import Button from '../components/Button.jsx';
@@ -48,36 +49,81 @@ function SectionTitle({ children }) {
   return <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: -0.4 }}>{children}</h3>;
 }
 
-export default function DetailScreen({ nav, id }) {
-  const a = byId[id] || ANIME[0];
+export default function DetailScreen({ nav, id, anime: animeProp }) {
+  const library = useLibrary();
   const toast = useToast();
+
+  // Resolve anime: passed prop > library catalog > local data
+  const baseAnime = animeProp || library?.getAnime(id) || byId[id] || ANIME[0];
+  const a = baseAnime;
+  const animeId = a.id;
+
+  // All tracking state from library
+  const ud = library?.userdata?.[animeId] || {};
+  const status = ud.status || null;
+  const fav = ud.fav || false;
+  const myScore = ud.myScore || 0;
+  const prog = ud.progress || (a.progress || 0);
+
   const [scrolled, setScrolled] = useState(false);
-  const [status, setStatus] = useState(a.status || null);
-  const [fav, setFav] = useState(!!a.fav);
-  const [myScore, setMyScore] = useState(a.myScore ? Math.round(a.myScore / 2) : 0);
-  const [prog, setProg] = useState(a.progress || 0);
   const [expanded, setExpanded] = useState(false);
   const [statusSheet, setStatusSheet] = useState(false);
 
   const chars = CHARACTERS.filter(c => c.anime.includes(a.title.split(':')[0].split(' ')[0]) || c.anime === a.title).slice(0, 6);
   const charset = chars.length ? chars : CHARACTERS.slice(0, 6);
-  const similar = ANIME.filter(x => x.id !== a.id && x.genres.some(g => a.genres.includes(g))).slice(0, 8);
+  const similar = ANIME.filter(x => x.id !== a.id && x.genres?.some(g => a.genres?.includes(g))).slice(0, 8);
   const review = REVIEWS.find(r => r.anime === a.id) || REVIEWS[0];
   const disc = DISCUSSIONS.find(d => d.anime === a.id) || DISCUSSIONS[0];
   const curStatus = LIST_STATUS.find(s => s.key === status);
+
+  const handleStatusSet = (key) => {
+    library?.addAnime(a);
+    library?.setStatus(animeId, key);
+    setStatusSheet(false);
+    toast(`Added to ${LIST_STATUS.find(s => s.key === key)?.label}`, 'success');
+  };
+
+  const handleStatusRemove = () => {
+    library?.removeStatus(animeId);
+    setStatusSheet(false);
+    toast('Removed from list', 'info');
+  };
+
+  const handleFavToggle = () => {
+    library?.addAnime(a);
+    library?.toggleFav(animeId);
+    toast(!fav ? 'Added to favorites' : 'Removed from favorites', !fav ? 'heart' : 'info');
+  };
+
+  const handleScore = (v) => {
+    library?.addAnime(a);
+    library?.setScore(animeId, v);
+    if (v) toast(`Rated ${v * 2}/10`, 'star');
+  };
+
+  const handleEpisode = () => {
+    const next = Math.min(a.episodes || 999, prog + 1);
+    library?.addAnime(a);
+    library?.setProgress(animeId, next);
+    const isFinished = a.episodes && next === a.episodes;
+    toast(isFinished ? 'All episodes watched!' : `Episode ${next} marked watched`, 'success');
+  };
+
+  // Banner: use anime.banner > anime.cover for hero
+  const heroBannerUrl = a.banner || a.cover || undefined;
 
   return (
     <div className="scroll" onScroll={e => setScrolled(e.target.scrollTop > 220)} style={{ height: '100%', paddingBottom: 40 }}>
       {/* Hero */}
       <div style={{ position: 'relative' }}>
         <div style={{ position: 'relative', aspectRatio: '4 / 5' }}>
-          <Art seed={a.id + '-banner'} animeId={a.id} useBanner hue={a.hue} label="Key visual" dim={0.36} />
+          <Art seed={a.id + '-banner'} animeId={a.id} useBanner hue={a.hue} label="Key visual" dim={0.36} imgUrl={heroBannerUrl} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--ink-0) 2%, rgba(8,8,10,0.45) 38%, rgba(8,8,10,0.15) 65%, rgba(8,8,10,0.4) 100%)' }} />
         </div>
         <BackBar nav={nav} title={a.title} scrolled={scrolled} />
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 20px 4px' }}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 9 }}>
-            {a.genres.map((g, idx, arr) => <span key={g} style={{ fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,0.82)' }}>{g}{idx < arr.length - 1 ? ' ·' : ''}</span>)}
+            {(a.genres || []).map((g, idx, arr) => <span key={g} style={{ fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,0.82)' }}>{g}{idx < arr.length - 1 ? ' ·' : ''}</span>)}
           </div>
           <h1 style={{ margin: 0, fontSize: 33, fontWeight: 900, letterSpacing: -1.1, lineHeight: 0.96, maxWidth: 320, textShadow: '0 2px 24px rgba(0,0,0,0.5)' }}>{a.title}</h1>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 7, fontStyle: 'italic' }}>{a.alt}</div>
@@ -86,9 +132,9 @@ export default function DetailScreen({ nav, id }) {
 
       {/* Meta strip */}
       <div className="hscroll" style={{ display: 'flex', gap: 0, margin: '18px 0 4px', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
-        {[[a.format, 'Format'], [a.episodes + ' eps', 'Episodes'], [a.season + ' ' + a.year, 'Aired'], [a.studio, 'Studio']].map(([v, l], i, arr) => (
+        {[[a.format, 'Format'], [a.episodes ? a.episodes + ' eps' : '?', 'Episodes'], [(a.season || '') + (a.year ? ' ' + a.year : ''), 'Aired'], [a.studio, 'Studio']].map(([v, l], i, arr) => (
           <div key={l} style={{ padding: '13px 18px', borderRight: i < arr.length - 1 ? '1px solid var(--line)' : 'none', flexShrink: 0 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 700, whiteSpace: 'nowrap' }}>{v}</div>
+            <div style={{ fontSize: 14.5, fontWeight: 700, whiteSpace: 'nowrap' }}>{v || '—'}</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: 0.8, color: 'var(--txt-faint)', textTransform: 'uppercase', marginTop: 3 }}>{l}</div>
           </div>
         ))}
@@ -102,7 +148,7 @@ export default function DetailScreen({ nav, id }) {
               {curStatus ? curStatus.label : 'Add to List'}
             </Button>
           </div>
-          <div className="tap" onClick={() => { const next = !fav; setFav(next); toast(next ? 'Added to favorites' : 'Removed from favorites', next ? 'heart' : 'info'); }} style={{ width: 54, borderRadius: 14, background: fav ? 'var(--accent-soft)' : 'var(--ink-3)', border: '1px solid ' + (fav ? 'var(--accent)' : 'var(--line-2)'), display: 'flex', alignItems: 'center', justifyContent: 'center', color: fav ? 'var(--accent)' : 'var(--txt)' }}>
+          <div className="tap" onClick={handleFavToggle} style={{ width: 54, borderRadius: 14, background: fav ? 'var(--accent-soft)' : 'var(--ink-3)', border: '1px solid ' + (fav ? 'var(--accent)' : 'var(--line-2)'), display: 'flex', alignItems: 'center', justifyContent: 'center', color: fav ? 'var(--accent)' : 'var(--txt)' }}>
             <Icon name={fav ? 'heartFill' : 'heart'} size={22} />
           </div>
           <div className="tap" style={{ width: 54, borderRadius: 14, background: 'var(--ink-3)', border: '1px solid var(--line-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--txt)' }}>
@@ -111,16 +157,18 @@ export default function DetailScreen({ nav, id }) {
         </div>
 
         {/* Community rating */}
-        <div style={{ display: 'flex', gap: 16, marginTop: 20, alignItems: 'center', background: 'var(--ink-1)', border: '1px solid var(--line)', borderRadius: 18, padding: 16 }}>
-          <div style={{ textAlign: 'center', paddingRight: 14, borderRight: '1px solid var(--line)' }}>
-            <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: -1, lineHeight: 1, color: 'var(--gold)' }}>{a.score.toFixed(2)}</div>
-            <div style={{ display: 'flex', gap: 1, justifyContent: 'center', margin: '5px 0 3px' }}>
-              {[0,1,2,3,4].map(i => <Icon key={i} name="starFill" size={11} color={i < Math.round(a.score/2) ? 'var(--gold)' : 'rgba(255,255,255,0.16)'} />)}
+        {a.score > 0 && (
+          <div style={{ display: 'flex', gap: 16, marginTop: 20, alignItems: 'center', background: 'var(--ink-1)', border: '1px solid var(--line)', borderRadius: 18, padding: 16 }}>
+            <div style={{ textAlign: 'center', paddingRight: 14, borderRight: '1px solid var(--line)' }}>
+              <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: -1, lineHeight: 1, color: 'var(--gold)' }}>{a.score.toFixed(2)}</div>
+              <div style={{ display: 'flex', gap: 1, justifyContent: 'center', margin: '5px 0 3px' }}>
+                {[0,1,2,3,4].map(i => <Icon key={i} name="starFill" size={11} color={i < Math.round(a.score/2) ? 'var(--gold)' : 'rgba(255,255,255,0.16)'} />)}
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--txt-faint)' }}>{fmt(a.members)} RATINGS</div>
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--txt-faint)' }}>{fmt(a.members)} RATINGS</div>
+            <RatingDist hue={a.hue} />
           </div>
-          <RatingDist hue={a.hue} />
-        </div>
+        )}
 
         {/* Your rating */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, background: 'var(--ink-1)', border: '1px solid var(--line)', borderRadius: 18, padding: '14px 16px' }}>
@@ -128,7 +176,7 @@ export default function DetailScreen({ nav, id }) {
             <div style={{ fontSize: 14, fontWeight: 700 }}>Your rating</div>
             <div style={{ fontSize: 11.5, color: 'var(--txt-faint)', marginTop: 1 }}>{myScore ? `You rated this ${myScore * 2}/10` : 'Tap to rate'}</div>
           </div>
-          <StarRating value={myScore} onChange={v => { setMyScore(v); if (v) toast(`Rated ${v * 2}/10`, 'star'); }} size={26} />
+          <StarRating value={myScore} onChange={handleScore} size={26} />
         </div>
 
         {/* Episode tracker */}
@@ -136,33 +184,38 @@ export default function DetailScreen({ nav, id }) {
           <div style={{ marginTop: 12, background: 'var(--ink-1)', border: '1px solid var(--line)', borderRadius: 18, padding: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 11 }}>
               <div style={{ fontSize: 14, fontWeight: 700 }}>Episode progress</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--txt-dim)' }}>{prog} / {a.episodes}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--txt-dim)' }}>{prog} / {a.episodes || '?'}</div>
             </div>
-            <Progress value={prog} total={a.episodes} height={6} />
+            <Progress value={prog} total={a.episodes || 1} height={6} />
             <div style={{ display: 'flex', gap: 10, marginTop: 13 }}>
-              <div className="tap" onClick={() => setProg(p => Math.max(0, p - 1))} style={stepBtn}><Icon name="x" size={16} color="var(--txt-dim)" /></div>
-              <div className="tap" onClick={() => { const next = Math.min(a.episodes, prog + 1); setProg(next); toast(next === a.episodes ? 'All episodes watched!' : `Episode ${next} marked watched`, 'success'); }} style={{ ...stepBtn, flex: 1, background: 'var(--accent)', color: '#fff', gap: 7, width: 'auto' }}>
-                <Icon name="plus" size={17} color="#fff" /> <span style={{ fontSize: 13.5, fontWeight: 700 }}>Watched EP {Math.min(a.episodes, prog + 1)}</span>
+              <div className="tap" onClick={() => { const n = Math.max(0, prog - 1); library?.setProgress(animeId, n); }} style={stepBtn}><Icon name="x" size={16} color="var(--txt-dim)" /></div>
+              <div className="tap" onClick={handleEpisode} style={{ ...stepBtn, flex: 1, background: 'var(--accent)', color: '#fff', gap: 7, width: 'auto' }}>
+                <Icon name="plus" size={17} color="#fff" />
+                <span style={{ fontSize: 13.5, fontWeight: 700 }}>Watched EP {a.episodes ? Math.min(a.episodes, prog + 1) : prog + 1}</span>
               </div>
             </div>
           </div>
         )}
 
         {/* Synopsis */}
-        <div style={{ marginTop: 24 }}>
-          <SectionTitle>Synopsis</SectionTitle>
-          <p style={{ fontSize: 14.5, lineHeight: 1.62, color: 'var(--txt-dim)', margin: '10px 0 0', display: expanded ? 'block' : '-webkit-box', WebkitLineClamp: expanded ? 'none' : 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{a.synopsis}</p>
-          <div className="tap" onClick={() => setExpanded(e => !e)} style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', marginTop: 7 }}>{expanded ? 'Show less' : 'Read more'}</div>
-        </div>
+        {a.synopsis && (
+          <div style={{ marginTop: 24 }}>
+            <SectionTitle>Synopsis</SectionTitle>
+            <p style={{ fontSize: 14.5, lineHeight: 1.62, color: 'var(--txt-dim)', margin: '10px 0 0', display: expanded ? 'block' : '-webkit-box', WebkitLineClamp: expanded ? 'none' : 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{a.synopsis}</p>
+            <div className="tap" onClick={() => setExpanded(e => !e)} style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', marginTop: 7 }}>{expanded ? 'Show less' : 'Read more'}</div>
+          </div>
+        )}
 
         {/* Tags */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
-          {a.tags.map(tg => <Tag key={tg}>{tg}</Tag>)}
-        </div>
+        {a.tags && a.tags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+            {a.tags.map(tg => <Tag key={tg}>{tg}</Tag>)}
+          </div>
+        )}
 
         {/* Trailer */}
         <div className="tap" style={{ marginTop: 18, position: 'relative', borderRadius: 16, overflow: 'hidden', aspectRatio: '16 / 9', border: '1px solid var(--line)' }}>
-          <Art seed={a.id + '-trailer'} animeId={a.id} useBanner hue={a.hue} dim={0.4} />
+          <Art seed={a.id + '-trailer'} animeId={a.id} useBanner hue={a.hue} dim={0.4} imgUrl={a.banner || a.cover || undefined} />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="play" size={24} color="#fff" />
@@ -211,7 +264,7 @@ export default function DetailScreen({ nav, id }) {
             <span style={{ display: 'flex', gap: 5, alignItems: 'center' }}><Icon name="comment" size={15} />{review.comments}</span>
           </div>
         </div>
-        <div className="tap" onClick={() => nav.push('review', { id: review.id, compose: true })} style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '13px', borderRadius: 14, border: '1px dashed var(--line-2)', color: 'var(--txt-dim)', fontSize: 14, fontWeight: 600 }}>
+        <div className="tap" style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '13px', borderRadius: 14, border: '1px dashed var(--line-2)', color: 'var(--txt-dim)', fontSize: 14, fontWeight: 600 }}>
           <Icon name="quote" size={17} /> Write a review
         </div>
       </div>
@@ -241,13 +294,13 @@ export default function DetailScreen({ nav, id }) {
       <Sheet open={statusSheet} onClose={() => setStatusSheet(false)} title="Add to list">
         <div style={{ padding: '8px 16px 24px' }}>
           {LIST_STATUS.map(s => (
-            <div key={s.key} className="tap" onClick={() => { setStatus(s.key); setStatusSheet(false); toast(`Added to ${s.label}`, 'success'); }} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 12px', borderRadius: 14, background: status === s.key ? 'var(--ink-3)' : 'transparent' }}>
+            <div key={s.key} className="tap" onClick={() => handleStatusSet(s.key)} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 12px', borderRadius: 14, background: status === s.key ? 'var(--ink-3)' : 'transparent' }}>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: accentFor(s.hue) }} />
               <span style={{ fontSize: 15.5, fontWeight: 600, flex: 1 }}>{s.label}</span>
               {status === s.key && <Icon name="check" size={20} color="var(--accent)" />}
             </div>
           ))}
-          {status && <div className="tap" onClick={() => { setStatus(null); setStatusSheet(false); toast('Removed from list', 'info'); }} style={{ textAlign: 'center', padding: 14, marginTop: 6, color: 'var(--accent)', fontWeight: 700, fontSize: 14.5 }}>Remove from list</div>}
+          {status && <div className="tap" onClick={handleStatusRemove} style={{ textAlign: 'center', padding: 14, marginTop: 6, color: 'var(--accent)', fontWeight: 700, fontSize: 14.5 }}>Remove from list</div>}
         </div>
       </Sheet>
     </div>

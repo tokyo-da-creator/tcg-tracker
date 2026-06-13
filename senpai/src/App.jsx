@@ -6,6 +6,7 @@ import Poster from './components/Poster.jsx';
 import Sheet from './components/Sheet.jsx';
 import { ToastProvider } from './components/Toast.jsx';
 import { ImageProvider } from './contexts/ImageContext.jsx';
+import { LibraryProvider } from './contexts/LibraryContext.jsx';
 
 import HomeScreen from './screens/HomeScreen.jsx';
 import SearchScreen from './screens/SearchScreen.jsx';
@@ -103,17 +104,20 @@ export default function App() {
 
   if (!hasOnboarded) {
     return (
-      <ImageProvider>
-        <ToastProvider>
-          <div className="app-frame">
-            <OnboardingScreen onComplete={() => setHasOnboarded(true)} />
-          </div>
-        </ToastProvider>
-      </ImageProvider>
+      <LibraryProvider>
+        <ImageProvider>
+          <ToastProvider>
+            <div className="app-frame">
+              <OnboardingScreen onComplete={() => setHasOnboarded(true)} />
+            </div>
+          </ToastProvider>
+        </ImageProvider>
+      </LibraryProvider>
     );
   }
 
   return (
+    <LibraryProvider>
     <ImageProvider>
     <ToastProvider>
       <div className="app-frame">
@@ -140,5 +144,6 @@ export default function App() {
       </div>
     </ToastProvider>
     </ImageProvider>
+    </LibraryProvider>
   );
 }

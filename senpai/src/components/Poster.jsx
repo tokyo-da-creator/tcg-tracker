@@ -7,7 +7,7 @@ export default function Poster({ anime, width = 132, onClick, showProgress = fal
   return (
     <div className="tap" onClick={onClick} style={{ width, flexShrink: 0 }}>
       <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 22px rgba(0,0,0,0.4)', border: '1px solid var(--line)' }}>
-        <Art seed={anime.id} hue={anime.hue} title={anime.title} showTitle label={label} ratio="2 / 3" dim={0.12} />
+        <Art seed={anime.id} hue={anime.hue} title={anime.title} showTitle label={label} ratio="2 / 3" dim={0.12} imgUrl={anime.cover || undefined} />
         {showScore && (
           <div style={{ position: 'absolute', top: 7, right: 7, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', borderRadius: 7, padding: '3px 6px' }}>
             <ScoreBadge score={anime.score} />

@@ -1,0 +1,13 @@
+{
+  "name": "Senpai",
+  "short_name": "Senpai",
+  "description": "Track every anime you've ever watched",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08080a",
+  "theme_color": "#08080a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

@@ -129,6 +129,10 @@ h1, h2, h3, h4 { margin: 0; }
   from { transform: translate(0, 0) scale(1.05); }
   to   { transform: translate(-4%, -3%) scale(1.15); }
 }
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
+}
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(12px) scale(0.94); }
   to   { opacity: 1; transform: none; }

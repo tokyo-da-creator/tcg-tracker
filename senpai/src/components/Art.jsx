@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { hash, artStyle } from '../data.js';
 import { useImages } from '../contexts/ImageContext.jsx';
 
-export default function Art({ seed, hue, label, title, ratio, radius = 0, dim = 0, style = {}, children, showTitle = false, animeId, useBanner = false }) {
+export default function Art({ seed, hue, label, title, ratio, radius = 0, dim = 0, style = {}, children, showTitle = false, animeId, useBanner = false, imgUrl: directUrl }) {
   const H = hue ?? (hash(seed || title || 'x') % 360);
   const base = artStyle(H);
   const images = useImages();
-  // Auto-lookup: first try seed directly, then explicit animeId override
+  // Priority: explicit imgUrl > context lookup by seed > context lookup by animeId
   const imgs = images[seed] ?? (animeId ? images[animeId] : null);
-  const imgUrl = imgs ? (useBanner ? (imgs.banner ?? imgs.cover) : imgs.cover) : null;
+  const contextUrl = imgs ? (useBanner ? (imgs.banner ?? imgs.cover) : imgs.cover) : null;
+  const imgUrl = directUrl ?? contextUrl;
   const [loaded, setLoaded] = useState(false);
 
   return (

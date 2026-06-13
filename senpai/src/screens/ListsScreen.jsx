@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
-import { ANIME, LIST_STATUS, byId, accentFor } from '../data.js';
+import { useState } from 'react';
+import { LIST_STATUS, byId, accentFor } from '../data.js';
+import { useLibrary } from '../contexts/LibraryContext.jsx';
 import { useToast } from '../components/Toast.jsx';
 import Art from '../components/Art.jsx';
 import Poster from '../components/Poster.jsx';
@@ -36,6 +37,7 @@ function ListRow({ a, onClick }) {
 const hdrBtn = { width: 40, height: 40, borderRadius: '50%', background: 'var(--ink-2)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 export default function ListsScreen({ nav }) {
+  const library = useLibrary();
   const toast = useToast();
   const [status, setStatus] = useState('watching');
   const [view, setView] = useState('grid');
@@ -46,8 +48,8 @@ export default function ListsScreen({ nav }) {
   const [customLists, setCustomLists] = useState(CUSTOM);
 
   const counts = {};
-  LIST_STATUS.forEach(s => counts[s.key] = ANIME.filter(a => a.status === s.key).length);
-  let items = ANIME.filter(a => a.status === status);
+  LIST_STATUS.forEach(s => counts[s.key] = library.countByStatus(s.key));
+  let items = library.getLibrary(status);
   if (sort === 'Score') items = [...items].sort((a, b) => (b.myScore || 0) - (a.myScore || 0));
   if (sort === 'Title A–Z') items = [...items].sort((a, b) => a.title.localeCompare(b.title));
   if (sort === 'Progress') items = [...items].sort((a, b) => (b.progress / b.episodes) - (a.progress / a.episodes));
@@ -93,10 +95,10 @@ export default function ListsScreen({ nav }) {
           </div>
         ) : view === 'grid' ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 13 }}>
-            {items.map(a => <Poster key={a.id} anime={a} width="100%" showProgress={status === 'watching' || status === 'hold'} showScore={status !== 'watching'} onClick={() => nav.push('detail', { id: a.id })} />)}
+            {items.map(a => <Poster key={a.id} anime={a} width="100%" showProgress={status === 'watching' || status === 'hold'} showScore={status !== 'watching'} onClick={() => nav.push('detail', { id: a.id, anime: a })} />)}
           </div>
         ) : (
-          <div>{items.map(a => <ListRow key={a.id} a={a} onClick={() => nav.push('detail', { id: a.id })} />)}</div>
+          <div>{items.map(a => <ListRow key={a.id} a={a} onClick={() => nav.push('detail', { id: a.id, anime: a })} />)}</div>
         )}
       </div>
 
