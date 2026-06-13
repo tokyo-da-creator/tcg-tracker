@@ -20,7 +20,7 @@ function renderNews() {
   grid.innerHTML = items.map((it) => `
     <a class="news-card" href="${esc(it.link)}" target="_blank" rel="noopener">
       <div class="news-meta">
-        <span class="ticker-source src-${esc(it.source)}">${esc(it.sourceLabel)}</span>
+        <span class="ticker-source src-${esc(it.source)}">${esc(it.sourceLabel || it.source)}</span>
         <span class="news-time">${esc(timeAgo(it.pubDate))}</span>
       </div>
       <h3>${esc(it.title.replace(/\s+-\s+[^-]+$/, ""))}</h3>
@@ -34,7 +34,7 @@ function renderNews() {
     const data = await res.json();
     newsItems = data.items ?? [];
     document.getElementById("updated").textContent =
-      `Refreshed ${data.updated.replace("T", " ").slice(0, 16)} UTC · refreshes automatically.`;
+      `Refreshed ${String(data.updated ?? "").replace("T", " ").slice(0, 16)} UTC · refreshes automatically.`;
     renderNews();
   } catch (err) {
     // local fallback: live fetch through the proxy used by the ticker

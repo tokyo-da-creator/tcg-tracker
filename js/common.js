@@ -165,6 +165,7 @@ async function getHistory() {
 }
 
 function sparklineSVG(points, w = 360, h = 90) {
+  if (points.length < 2) return "";
   const vals = points.map((p) => p.v);
   const min = Math.min(...vals);
   const max = Math.max(...vals);
@@ -211,6 +212,7 @@ async function renderCardHistory(game, id, el) {
 /* ---------- Modal ---------- */
 function openModal(innerHTML) {
   const root = document.getElementById("modal-root");
+  if (!root) return;
   root.innerHTML = `
     <div class="modal-overlay">
       <div class="modal" role="dialog" aria-modal="true">

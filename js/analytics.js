@@ -614,7 +614,7 @@ function openAnalyticsCard(card) {
     ]);
     baseChartOpts();
     document.getElementById("updated").textContent =
-      `Data refreshed ${analytics.updated.replace("T", " ").slice(0, 16)} UTC · refreshes automatically.`;
+      `Data refreshed ${String(analytics.updated ?? "").replace("T", " ").slice(0, 16)} UTC · refreshes automatically.`;
     renderSentiment(movers, analytics);
     renderTiles(analytics, movers);
     renderSetValueChart(analytics);

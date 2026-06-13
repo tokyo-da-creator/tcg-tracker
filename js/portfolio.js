@@ -366,7 +366,7 @@ async function pfInit() {
   _pfHistory = await pfFetchHistory();
   await pfInit();
 
-  document.addEventListener("portfolio-changed", pfInit);
+  document.addEventListener("portfolio-changed", debounce(pfInit, 200));
 
   document.querySelectorAll(".pf-range-btn").forEach(btn => {
     btn.addEventListener("click", () => {

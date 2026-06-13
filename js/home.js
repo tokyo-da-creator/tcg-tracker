@@ -362,6 +362,7 @@ async function loadOnePiecePanel(cache) {
       .filter((s) => /^OP-\d+/.test(s.set_id))
       .sort((a, b) => parseInt(b.set_id.slice(3)) - parseInt(a.set_id.slice(3)));
     const set = main[0];
+    if (!set) throw new Error("No OP main sets found");
     label.textContent = `${set.set_name} (${set.set_id})`;
 
     const cards = await getJSON(`${OP_API}/sets/${encodeURIComponent(set.set_id)}/`);

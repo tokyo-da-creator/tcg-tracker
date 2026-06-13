@@ -120,7 +120,7 @@ function cardLi(card) {
   li.innerHTML = `
     <img loading="lazy" decoding="async" src="${esc(hiResImage(card.images.large || card.images.small))}" alt="${esc(card.name)}" />
     <div class="name">${esc(card.name)}</div>
-    <div class="meta">${esc(card.set.name)} · #${esc(card.number)}/${esc(card.set.printedTotal)}</div>
+    <div class="meta">${esc(card.set.name)} · #${esc(card.number)}/${esc(card.set.printedTotal ?? "?")}</div>
     <div class="pricebar">
       <span class="price">${displayPrice != null ? usd(displayPrice) : "—"}</span>
       <span class="rarity-group">${deltaSpan}<span class="rarity">${esc(card.rarity ?? "—")}</span></span>
@@ -686,7 +686,7 @@ function openCard(card) {
         <button class="copy-name-btn" title="Copy card name">⎘ Copy</button>
       </div>
       <div class="meta">
-        ${esc(card.set.name)} · #${esc(card.number)}/${esc(card.set.printedTotal)} ·
+        ${esc(card.set.name)} · #${esc(card.number)}/${esc(card.set.printedTotal ?? "?")} ·
         ${esc(card.rarity ?? "Unknown rarity")} ${card.artist ? "· Illus. " + esc(card.artist) : ""}
       </div>
       <div class="detail-grid">${detailRows}</div>

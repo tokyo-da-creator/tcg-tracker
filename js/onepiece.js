@@ -147,6 +147,7 @@ async function init() {
     setSelect.innerHTML = sets
       .map((s) => `<option value="${esc(s.set_id)}">${esc(s.set_name)} (${esc(s.set_id)})</option>`)
       .join("");
+    if (!sets.length) throw new Error("No sets returned");
     await loadSet(sets[0].set_id);
   } catch (err) {
     statusEl.textContent = "Couldn't load sets — please refresh.";

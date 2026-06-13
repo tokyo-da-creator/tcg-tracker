@@ -30,10 +30,10 @@ function buildConfig() {
 
   return {
     restock: { enabled: el("opt-restock")?.checked !== false },
-    movers: { enabled: el("opt-movers").checked, minPct: clampNum(el("movers-pct").value, 1, 90, 15) },
-    sealed: { enabled: el("opt-sealed").checked, minPct: clampNum(el("sealed-pct").value, 1, 90, 10) },
-    news: { enabled: el("opt-news").checked },
-    watchlist: { enabled: el("opt-watch").checked, cards: triggers },
+    movers: { enabled: el("opt-movers")?.checked ?? true, minPct: clampNum(el("movers-pct")?.value, 1, 90, 15) },
+    sealed: { enabled: el("opt-sealed")?.checked ?? true, minPct: clampNum(el("sealed-pct")?.value, 1, 90, 10) },
+    news: { enabled: el("opt-news")?.checked ?? true },
+    watchlist: { enabled: el("opt-watch")?.checked ?? true, cards: triggers },
   };
 }
 
@@ -95,7 +95,8 @@ async function sendTest() {
   }
   result.textContent = "Sending…";
   try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const safeToken = token.replace(/[^A-Za-z0-9:_-]/g, "");
+    const res = await fetch(`https://api.telegram.org/bot${safeToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -108,7 +109,7 @@ async function sendTest() {
       result.textContent = "✅ Test message sent — check Telegram!";
       el("tg-status").textContent = "Connected";
       el("tg-status").style.color = "var(--up)";
-      sessionStorage.setItem("pokesnipr-tg", JSON.stringify({ token, chat }));
+      sessionStorage.setItem("pokesnipr-tg-ok", "1");
     } else {
       result.textContent = `Telegram error: ${data.description ?? "unknown"}. Double-check the token and chat ID.`;
     }
