@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Senpai — Screen Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink-0: #08080a; --ink-1: #101013; --ink-2: #17171b; --ink-3: #1f1f24; --ink-4: #2a2a30;
+  --line: rgba(255,255,255,0.08); --line-2: rgba(255,255,255,0.13);
+  --txt: #f5f5f7; --txt-dim: rgba(235,235,245,0.60); --txt-faint: rgba(235,235,245,0.34);
+  --accent: #ff3b30; --accent-soft: rgba(255,59,48,0.16); --gold: #f5c451;
+  --font-sans: 'Schibsted Grotesk', -apple-system, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  background: #0a0a0c;
+  color: var(--txt);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  padding: 40px 24px 60px;
+}
+h1.page-title {
+  text-align: center;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+  margin-bottom: 10px;
+}
+.page-sub {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.8px;
+  margin-bottom: 48px;
+}
+.screens-row {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  padding: 0 4px 24px;
+  scrollbar-width: none;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.screen-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.screen-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+}
+.phone {
+  width: 320px;
+  height: 620px;
+  background: var(--ink-0);
+  border-radius: 40px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+/* Notch */
+.phone::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 100px; height: 28px;
+  background: var(--ink-0);
+  border-radius: 0 0 18px 18px;
+  z-index: 100;
+  border-bottom: 1.5px solid rgba(255,255,255,0.06);
+  border-left: 1.5px solid rgba(255,255,255,0.06);
+  border-right: 1.5px solid rgba(255,255,255,0.06);
+}
+.screen { width: 100%; height: 100%; overflow: hidden; position: relative; font-size: 13px; }
+
+/* Art gradient engine */
+.art {
+  width: 100%; height: 100%;
+  position: absolute; inset: 0;
+}
+.art-0 { background: radial-gradient(ellipse 120% 90% at 30% 20%, oklch(0.42 0.22 18) 0%, oklch(0.18 0.12 18) 55%, oklch(0.09 0.05 18) 100%); }
+.art-1 { background: radial-gradient(ellipse 110% 80% at 70% 30%, oklch(0.44 0.20 268) 0%, oklch(0.20 0.10 268) 50%, oklch(0.08 0.04 268) 100%); }
+.art-2 { background: radial-gradient(ellipse 130% 100% at 20% 60%, oklch(0.40 0.22 138) 0%, oklch(0.18 0.12 138) 55%, oklch(0.09 0.05 138) 100%); }
+.art-3 { background: radial-gradient(ellipse 120% 90% at 60% 40%, oklch(0.42 0.20 48) 0%, oklch(0.20 0.10 48) 55%, oklch(0.09 0.05 48) 100%); }
+.art-4 { background: radial-gradient(ellipse 110% 85% at 40% 25%, oklch(0.43 0.21 312) 0%, oklch(0.19 0.11 312) 55%, oklch(0.09 0.05 312) 100%); }
+.art-5 { background: radial-gradient(ellipse 125% 95% at 50% 50%, oklch(0.41 0.23 230) 0%, oklch(0.19 0.12 230) 55%, oklch(0.08 0.05 230) 100%); }
+.art-6 { background: radial-gradient(ellipse 115% 80% at 35% 70%, oklch(0.44 0.19 168) 0%, oklch(0.20 0.09 168) 55%, oklch(0.09 0.04 168) 100%); }
+.art-7 { background: radial-gradient(ellipse 120% 90% at 65% 20%, oklch(0.42 0.22 330) 0%, oklch(0.18 0.12 330) 55%, oklch(0.09 0.05 330) 100%); }
+
+/* Tab bar */
+.tabbar {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 90;
+  padding: 9px 0 26px;
+  background: linear-gradient(to top, rgba(8,8,10,0.97) 55%, rgba(8,8,10,0));
+  backdrop-filter: blur(16px);
+  display: flex; justify-content: space-around; align-items: center;
+  padding-left: 14px; padding-right: 14px;
+}
+.tab-item { display: flex; flex-direction: column; align-items: center; gap: 3; width: 58px; color: var(--txt-faint); }
+.tab-item.active { color: var(--txt); }
+.tab-item span { font-size: 9px; font-weight: 600; }
+.tab-plus {
+  width: 48px; height: 48px; border-radius: 16px; background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 22px rgba(255,59,48,0.42);
+  margin-top: -4px;
+}
+/* SVG icons inline */
+svg { display: block; }
+
+/* ---- SCREEN: ONBOARDING ---- */
+.ob-header { padding: 52px 20px 0; }
+.ob-progress { display: flex; gap: 6px; margin-bottom: 24px; }
+.ob-bar { flex: 1; height: 3px; border-radius: 2px; }
+.ob-bar.done { background: var(--accent); }
+.ob-bar.todo { background: var(--ink-3); }
+.ob-title { font-size: 25px; font-weight: 900; letter-spacing: -0.8px; line-height: 1.1; }
+.ob-sub { font-size: 12.5px; color: var(--txt-faint); margin-top: 7px; line-height: 1.4; }
+.ob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 18px 20px 0; }
+.ob-genre {
+  position: relative; border-radius: 14px; overflow: hidden;
+  aspect-ratio: 16/10;
+}
+.ob-genre-inner { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 9px 11px; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 70%); }
+.ob-genre-inner span { font-size: 14px; font-weight: 800; flex: 1; }
+.ob-check { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; }
+.ob-continue {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 12px 20px 36px;
+  background: linear-gradient(to top, var(--ink-0) 65%, transparent);
+}
+.ob-btn {
+  text-align: center; padding: 16px; border-radius: 15px;
+  background: var(--accent); color: #fff; font-weight: 800; font-size: 15px;
+  box-shadow: 0 8px 22px rgba(255,59,48,0.36);
+}
+.ob-btn-dim {
+  text-align: center; padding: 16px; border-radius: 15px;
+  background: var(--ink-3); color: var(--txt-faint); font-weight: 800; font-size: 15px;
+}
+
+/* ---- SCREEN: HOME ---- */
+.hero-home {
+  position: relative; height: 340px; overflow: hidden;
+}
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, var(--ink-0) 3%, rgba(8,8,10,0.4) 40%, rgba(8,8,10,0.15) 70%, rgba(8,8,10,0.5) 100%);
+}
+.hero-meta {
+  position: absolute; bottom: 16px; left: 18px; right: 18px;
+}
+.hero-tag { display: inline-block; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.14); border-radius: 6px; padding: 3px 8px; margin-bottom: 8px; }
+.hero-title { font-size: 29px; font-weight: 900; letter-spacing: -1px; line-height: 0.95; text-shadow: 0 2px 24px rgba(0,0,0,0.5); }
+.hero-sub { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 6px; font-style: italic; }
+.hero-btns { display: flex; gap: 9px; margin-top: 13px; }
+.btn-primary { flex: 1; text-align: center; padding: 11px; border-radius: 12px; background: var(--accent); color: #fff; font-weight: 700; font-size: 13px; }
+.btn-ghost { padding: 11px 16px; border-radius: 12px; background: rgba(255,255,255,0.12); color: #fff; font-weight: 700; font-size: 13px; border: 1px solid rgba(255,255,255,0.18); }
+.topbar-home { position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 48px 18px 10px; }
+.topbar-logo { font-size: 22px; font-weight: 900; letter-spacing: -0.8px; }
+.topbar-logo span { color: var(--accent); }
+.avatar-sm { width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(ellipse at 40% 30%, oklch(0.55 0.25 18), oklch(0.25 0.15 18)); border: 1.5px solid var(--line-2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+.sec-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--txt-faint); margin: 16px 18px 8px; }
+.rail { display: flex; gap: 11px; padding: 0 18px; overflow: hidden; }
+.poster { border-radius: 12px; overflow: hidden; background: var(--ink-2); flex-shrink: 0; position: relative; }
+.poster-title { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 8px; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent 55%); font-size: 10px; font-weight: 700; line-height: 1.2; }
+.score-badge { position: absolute; top: 6px; right: 6px; display: flex; align-items: center; gap: 2px; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); border-radius: 6px; padding: 3px 5px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--gold); border: 1px solid rgba(245,196,81,0.3); }
+
+/* ---- SCREEN: SEARCH ---- */
+.search-header { padding: 48px 16px 10px; background: linear-gradient(to bottom, var(--ink-0) 70%, transparent); }
+.search-bar { display: flex; gap: 9px; }
+.search-input { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 13px; padding: 0 12px; height: 44px; }
+.search-input input { flex: 1; background: none; border: none; outline: none; color: var(--txt); font-size: 14px; font-family: var(--font-sans); }
+.filter-btn { width: 44px; height: 44px; border-radius: 13px; background: var(--ink-2); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
+.genre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; margin-top: 14px; }
+.genre-card { position: relative; border-radius: 14px; overflow: hidden; aspect-ratio: 16/10; }
+.genre-label { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 11px 12px; background: linear-gradient(to top, rgba(0,0,0,0.5), transparent 70%); font-size: 14px; font-weight: 800; }
+.rank-row { display: flex; align-items: center; gap: 12px; padding: 8px 16px; }
+.rank-num { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--accent); width: 20px; text-align: center; }
+.rank-art { width: 40px; height: 54px; border-radius: 7px; overflow: hidden; flex-shrink: 0; position: relative; }
+.rank-info { flex: 1; min-width: 0; }
+.rank-title { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-meta { font-size: 10.5px; color: var(--txt-faint); margin-top: 2px; }
+
+/* ---- SCREEN: DETAIL ---- */
+.detail-hero { position: relative; height: 280px; }
+.detail-overlay { position: absolute; inset: 0; background: linear-gradient(to top, var(--ink-0) 3%, rgba(8,8,10,0.45) 38%, rgba(8,8,10,0.15) 65%, rgba(8,8,10,0.4) 100%); }
+.detail-title-block { position: absolute; bottom: 8px; left: 18px; right: 18px; }
+.detail-genres { display: flex; gap: 7px; margin-bottom: 6px; }
+.detail-genres span { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); }
+.detail-h1 { font-size: 30px; font-weight: 900; letter-spacing: -1px; line-height: 0.95; text-shadow: 0 2px 24px rgba(0,0,0,0.5); }
+.detail-alt { font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 5px; font-style: italic; }
+.detail-back { position: absolute; top: 48px; left: 14px; width: 36px; height: 36px; border-radius: 50%; background: rgba(20,20,24,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; }
+.meta-strip { display: flex; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 14px 0 4px; }
+.meta-cell { padding: 11px 16px; border-right: 1px solid var(--line); flex-shrink: 0; }
+.meta-val { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.meta-lbl { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--txt-faint); margin-top: 2px; }
+.detail-actions { display: flex; gap: 9px; padding: 0 18px; }
+.btn-list { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 12px; border-radius: 13px; background: var(--accent); color: #fff; font-weight: 700; font-size: 13.5px; }
+.btn-sq { width: 50px; border-radius: 13px; background: var(--ink-3); border: 1px solid var(--line-2); display: flex; align-items: center; justify-content: center; }
+.rating-block { margin: 12px 18px 0; background: var(--ink-1); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; gap: 14px; align-items: center; }
+.community-score { text-align: center; padding-right: 13px; border-right: 1px solid var(--line); }
+.community-score-num { font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1; color: var(--gold); }
+.community-score-stars { display: flex; gap: 1px; justify-content: center; margin: 4px 0 2px; }
+.community-score-members { font-family: var(--font-mono); font-size: 8px; color: var(--txt-faint); }
+.your-rating { margin: 10px 18px 0; background: var(--ink-1); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+.yr-left div:first-child { font-size: 13px; font-weight: 700; }
+.yr-left div:last-child { font-size: 10.5px; color: var(--txt-faint); margin-top: 1px; }
+.stars { display: flex; gap: 3px; }
+
+/* ---- SCREEN: LIBRARY ---- */
+.lib-header { padding: 48px 18px 10px; display: flex; justify-content: space-between; align-items: center; }
+.lib-title { font-size: 28px; font-weight: 900; letter-spacing: -0.8px; }
+.lib-tabs { display: flex; gap: 8px; padding: 4px 18px 12px; overflow: hidden; }
+.lib-tab { display: flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 11px; flex-shrink: 0; white-space: nowrap; }
+.lib-tab.active { background: var(--ink-3); border: 1px solid var(--line-2); }
+.lib-tab.inactive { color: var(--txt-faint); }
+.lib-dot { width: 7px; height: 7px; border-radius: 50%; }
+.lib-tab span.label { font-size: 13px; font-weight: 700; }
+.lib-tab span.count { font-family: var(--font-mono); font-size: 10px; color: var(--txt-dim); }
+.poster-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; padding: 0 18px; }
+.pg-item { border-radius: 11px; overflow: hidden; position: relative; aspect-ratio: 2/3; }
+.pg-item .art { position: relative; width: 100%; height: 100%; }
+.custom-section { padding: 20px 0 0; }
+.custom-hdr { display: flex; justify-content: space-between; align-items: center; padding: 0 18px; margin-bottom: 11px; }
+.custom-hdr h3 { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+.custom-new { display: flex; align-items: center; gap: 4px; color: var(--accent); font-size: 13px; font-weight: 700; }
+.custom-rail { display: flex; gap: 12px; padding: 0 18px; overflow: hidden; }
+.custom-card { width: 170px; flex-shrink: 0; border-radius: 14px; overflow: hidden; height: 104px; position: relative; display: flex; }
+.custom-card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent 55%); display: flex; align-items: flex-end; padding: 10px 11px; }
+.custom-card-name { font-size: 13.5px; font-weight: 800; letter-spacing: -0.2px; }
+.custom-card-count { font-family: var(--font-mono); font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+
+/* ---- SCREEN: PROFILE ---- */
+.prof-banner { position: relative; height: 160px; overflow: hidden; }
+.prof-banner-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(8,8,10,0.2), rgba(8,8,10,0.7) 100%); }
+.prof-avatar-row { display: flex; align-items: flex-end; justify-content: space-between; padding: 0 18px; margin-top: -28px; position: relative; }
+.prof-avatar { width: 72px; height: 72px; border-radius: 22px; border: 3px solid var(--ink-0); background: radial-gradient(ellipse at 40% 30%, oklch(0.55 0.25 18), oklch(0.25 0.15 18)); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; }
+.prof-btns { display: flex; gap: 8px; padding-bottom: 4px; }
+.btn-edit { padding: 8px 16px; border-radius: 10px; background: var(--ink-3); border: 1px solid var(--line-2); font-size: 12.5px; font-weight: 700; color: var(--txt); }
+.btn-follow-out { padding: 8px 16px; border-radius: 10px; background: var(--accent); font-size: 12.5px; font-weight: 700; color: #fff; }
+.prof-name { font-size: 21px; font-weight: 900; letter-spacing: -0.5px; margin: 12px 18px 2px; }
+.prof-handle { font-family: var(--font-mono); font-size: 11px; color: var(--txt-faint); margin: 0 18px 8px; }
+.prof-bio { font-size: 12.5px; color: var(--txt-dim); line-height: 1.45; margin: 0 18px 12px; }
+.prof-followers { display: flex; gap: 18px; margin: 0 18px 14px; }
+.prof-followers span.num { font-weight: 800; font-size: 14px; }
+.prof-followers span.lbl { font-size: 11.5px; color: var(--txt-faint); margin-left: 4px; }
+.stat-strip { display: flex; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 0 14px; }
+.stat-cell { flex: 1; text-align: center; padding: 12px 0; border-right: 1px solid var(--line); }
+.stat-cell:last-child { border-right: none; }
+.stat-num { font-family: var(--font-mono); font-size: 18px; font-weight: 700; }
+.stat-lbl { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--txt-faint); margin-top: 2px; }
+.seg-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); margin: 0 18px; }
+.seg-tab { padding: 10px 14px; font-size: 13px; font-weight: 700; color: var(--txt-faint); position: relative; }
+.seg-tab.active { color: var(--txt); }
+.seg-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--accent); border-radius: 1px; }
+.fav-row { display: flex; gap: 10px; padding: 12px 18px 0; overflow: hidden; }
+.fav-poster { width: 70px; flex-shrink: 0; }
+.fav-poster .art-wrap { height: 100px; border-radius: 10px; overflow: hidden; position: relative; }
+.fav-poster-title { font-size: 9px; font-weight: 600; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--txt-dim); }
+
+/* ---- SCREEN: TOAST DEMO ---- */
+.toast-demo-screen { background: var(--ink-0); }
+.toast-pill {
+  position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 14px 10px 11px; border-radius: 13px;
+  background: rgba(28,28,32,0.96); border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45); backdrop-filter: blur(18px);
+  white-space: nowrap; z-index: 50;
+}
+.toast-icon { width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.toast-msg { font-size: 13px; font-weight: 600; }
+
+/* Divider */
+.section-divider { display: flex; align-items: center; gap: 16px; margin: 40px 0 32px; }
+.section-divider hr { flex: 1; border: none; border-top: 1px solid rgba(255,255,255,0.06); }
+.section-divider span { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.2); }
+
+p { margin: 0; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Senpai App</h1>
+<div class="page-sub">Completed Screens</div>
+
+<div class="screens-row">
+
+  <!-- ONBOARDING -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="screen">
+        <!-- Onboarding step 1: genres -->
+        <div class="ob-header">
+          <div class="ob-progress">
+            <div class="ob-bar done"></div>
+            <div class="ob-bar todo"></div>
+            <div class="ob-bar todo"></div>
+            <div class="ob-bar todo"></div>
+          </div>
+          <div class="ob-title">What genres do you love?</div>
+          <div class="ob-sub">Pick at least 3 to personalize your feed</div>
+        </div>
+        <div class="ob-grid">
+          <div class="ob-genre"><div class="art art-0" style="position:absolute;inset:0;border-radius:14px;"></div><div class="ob-genre-inner" style="border:2.5px solid var(--accent);position:absolute;inset:0;border-radius:14px;"><span>Action</span><div class="ob-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div></div></div>
+          <div class="ob-genre"><div class="art art-1" style="position:absolute;inset:0;border-radius:14px;"></div><div class="ob-genre-inner" style="border:2.5px solid var(--accent);position:absolute;inset:0;border-radius:14px;"><span>Fantasy</span><div class="ob-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div></div></div>
+          <div class="ob-genre"><div class="art art-4" style="position:absolute;inset:0;border-radius:14px;"></div><div class="ob-genre-inner" style="border:2.5px solid var(--accent);position:absolute;inset:0;border-radius:14px;"><span>Supernatural</span><div class="ob-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div></div></div>
+          <div class="ob-genre"><div class="art art-7" style="position:absolute;inset:0;border-radius:14px;"></div><div class="ob-genre-inner" style="position:absolute;inset:0;border-radius:14px;border:2px solid transparent;"><span>Drama</span></div></div>
+          <div class="ob-genre"><div class="art art-2" style="position:absolute;inset:0;border-radius:14px;"></div><div class="ob-genre-inner" style="position:absolute;inset:0;border-radius:14px;border:2px solid transparent;"><span>Adventure</span></div></div>
+          <div class="ob-genre"><div class="art art-3" style="position:absolute;inset:0;border-radius:14px;"></div><div class="ob-genre-inner" style="position:absolute;inset:0;border-radius:14px;border:2px solid transparent;"><span>Comedy</span></div></div>
+        </div>
+        <div class="ob-continue">
+          <div class="ob-btn">Continue with 3 genres →</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">Onboarding</div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="screen">
+        <div class="hero-home">
+          <div class="art art-1" style="position:absolute;inset:0;"></div>
+          <div class="hero-overlay"></div>
+          <div class="topbar-home">
+            <div class="topbar-logo">Sen<span>pai</span></div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--txt)" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <div class="avatar-sm">K</div>
+            </div>
+          </div>
+          <div class="hero-meta">
+            <div class="hero-tag">▶ New Episode</div>
+            <div class="hero-title">Demon<br>Slayer</div>
+            <div class="hero-sub">Kimetsu no Yaiba</div>
+            <div class="hero-btns">
+              <div class="btn-primary">+ Add to List</div>
+              <div class="btn-ghost">More Info</div>
+            </div>
+          </div>
+        </div>
+        <!-- Continue watching -->
+        <div class="sec-label">Continue Watching</div>
+        <div class="rail">
+          <div class="poster" style="width:90px;height:126px;"><div class="art art-0" style="position:absolute;inset:0;"></div><div class="poster-title">Demon Slayer</div><div class="score-badge">★ 9.1</div></div>
+          <div class="poster" style="width:90px;height:126px;"><div class="art art-6" style="position:absolute;inset:0;"></div><div class="poster-title">Spy×Family</div><div class="score-badge">★ 8.7</div></div>
+          <div class="poster" style="width:90px;height:126px;"><div class="art art-5" style="position:absolute;inset:0;"></div><div class="poster-title">Jujutsu Kaisen</div><div class="score-badge">★ 8.9</div></div>
+        </div>
+        <!-- Trending -->
+        <div class="sec-label">Trending Now</div>
+        <div class="rail">
+          <div class="poster" style="width:90px;height:126px;"><div class="art art-3" style="position:absolute;inset:0;"></div><div class="poster-title">One Piece</div></div>
+          <div class="poster" style="width:90px;height:126px;"><div class="art art-2" style="position:absolute;inset:0;"></div><div class="poster-title">Frieren</div></div>
+          <div class="poster" style="width:90px;height:126px;"><div class="art art-7" style="position:absolute;inset:0;"></div><div class="poster-title">Violet Evergarden</div></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab-item active"><svg width="24" height="24" viewBox="0 0 24 24" fill="var(--txt)" stroke="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/></svg><span>Home</span></div>
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Discover</span></div>
+          <div class="tab-plus"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Lists</span></div>
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>You</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">Home</div>
+  </div>
+
+  <!-- DISCOVER / SEARCH -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="screen">
+        <div class="search-header">
+          <div style="font-size:26px;font-weight:900;letter-spacing:-0.8px;margin-bottom:12px;">Discover</div>
+          <div class="search-bar">
+            <div class="search-input">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input placeholder="Search anime, characters, studios" readonly>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+            </div>
+            <div class="filter-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--txt)" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg></div>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-faint);padding:0 16px;margin-bottom:10px;">Browse by Genre</div>
+        <div class="genre-grid">
+          <div class="genre-card"><div class="art art-0"></div><div class="genre-label">Action</div></div>
+          <div class="genre-card"><div class="art art-1"></div><div class="genre-label">Fantasy</div></div>
+          <div class="genre-card"><div class="art art-2"></div><div class="genre-label">Adventure</div></div>
+          <div class="genre-card"><div class="art art-7"></div><div class="genre-label">Drama</div></div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-faint);padding:14px 16px 8px;">Top Ranked</div>
+        <div class="rank-row">
+          <div class="rank-num">1</div>
+          <div class="rank-art"><div class="art art-1" style="position:absolute;inset:0;"></div></div>
+          <div class="rank-info"><div class="rank-title">Fullmetal Alchemist: Brotherhood</div><div class="rank-meta">TV · 64 eps · Bones</div></div>
+          <div style="display:flex;align-items:center;gap:3px;background:rgba(245,196,81,0.12);border-radius:7px;padding:4px 7px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--gold);">9.1</span></div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-num">2</div>
+          <div class="rank-art"><div class="art art-5" style="position:absolute;inset:0;"></div></div>
+          <div class="rank-info"><div class="rank-title">Steins;Gate</div><div class="rank-meta">TV · 24 eps · White Fox</div></div>
+          <div style="display:flex;align-items:center;gap:3px;background:rgba(245,196,81,0.12);border-radius:7px;padding:4px 7px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--gold);">9.0</span></div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-num">3</div>
+          <div class="rank-art"><div class="art art-0" style="position:absolute;inset:0;"></div></div>
+          <div class="rank-info"><div class="rank-title">Demon Slayer</div><div class="rank-meta">TV · 26 eps · ufotable</div></div>
+          <div style="display:flex;align-items:center;gap:3px;background:rgba(245,196,81,0.12);border-radius:7px;padding:4px 7px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--gold);">9.1</span></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/></svg><span>Home</span></div>
+          <div class="tab-item active"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Discover</span></div>
+          <div class="tab-plus"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Lists</span></div>
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>You</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">Discover</div>
+  </div>
+
+  <!-- DETAIL -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="screen">
+        <div class="detail-hero">
+          <div class="art art-0" style="position:absolute;inset:0;"></div>
+          <div class="detail-overlay"></div>
+          <div class="detail-back">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+          <div class="detail-title-block">
+            <div class="detail-genres"><span>Action ·</span><span>Fantasy ·</span><span>Drama</span></div>
+            <div class="detail-h1">Demon<br>Slayer</div>
+            <div class="detail-alt">Kimetsu no Yaiba</div>
+          </div>
+        </div>
+        <div class="meta-strip">
+          <div class="meta-cell"><div class="meta-val">TV</div><div class="meta-lbl">Format</div></div>
+          <div class="meta-cell"><div class="meta-val">26 eps</div><div class="meta-lbl">Episodes</div></div>
+          <div class="meta-cell"><div class="meta-val">Spring 2019</div><div class="meta-lbl">Aired</div></div>
+          <div class="meta-cell" style="border-right:none;"><div class="meta-val">ufotable</div><div class="meta-lbl">Studio</div></div>
+        </div>
+        <div class="detail-actions">
+          <div class="btn-list" style="height:48px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Watching
+          </div>
+          <div class="btn-sq" style="height:48px;">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="var(--accent)" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+          <div class="btn-sq" style="height:48px;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--txt)" stroke-width="1.8" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+        </div>
+        <div class="rating-block">
+          <div class="community-score">
+            <div class="community-score-num">9.10</div>
+            <div class="community-score-stars">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(255,255,255,0.15)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div class="community-score-members">1.2M RATINGS</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
+            <div style="display:flex;align-items:center;gap:7px;"><span style="font-family:var(--font-mono);font-size:9px;color:var(--txt-faint);width:7px;">5</span><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;"><div style="width:52%;height:100%;background:linear-gradient(90deg,oklch(0.66 0.17 18),var(--accent));border-radius:3px;"></div></div></div>
+            <div style="display:flex;align-items:center;gap:7px;"><span style="font-family:var(--font-mono);font-size:9px;color:var(--txt-faint);width:7px;">4</span><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;"><div style="width:28%;height:100%;background:linear-gradient(90deg,oklch(0.66 0.17 18),var(--accent));border-radius:3px;"></div></div></div>
+            <div style="display:flex;align-items:center;gap:7px;"><span style="font-family:var(--font-mono);font-size:9px;color:var(--txt-faint);width:7px;">3</span><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;"><div style="width:13%;height:100%;background:linear-gradient(90deg,oklch(0.66 0.17 18),var(--accent));border-radius:3px;"></div></div></div>
+            <div style="display:flex;align-items:center;gap:7px;"><span style="font-family:var(--font-mono);font-size:9px;color:var(--txt-faint);width:7px;">2</span><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;"><div style="width:5%;height:100%;background:linear-gradient(90deg,oklch(0.66 0.17 18),var(--accent));border-radius:3px;"></div></div></div>
+          </div>
+        </div>
+        <div class="your-rating">
+          <div class="yr-left"><div>Your rating</div><div>Rated 8/10</div></div>
+          <div class="stars">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--gold)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,0.15)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+        </div>
+        <!-- Toast -->
+        <div class="toast-pill" style="bottom:20px;">
+          <div class="toast-icon" style="background:rgba(255,59,48,0.18)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <span class="toast-msg">Added to Watching</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">Anime Detail</div>
+  </div>
+
+  <!-- LIBRARY -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="screen">
+        <div class="lib-header">
+          <div class="lib-title">Library</div>
+          <div style="display:flex;gap:8px;">
+            <div style="width:38px;height:38px;border-radius:50%;background:var(--ink-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--txt)" stroke-width="1.8" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </div>
+            <div style="width:38px;height:38px;border-radius:50%;background:var(--ink-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--txt)" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="lib-tabs">
+          <div class="lib-tab active"><div class="lib-dot" style="background:oklch(0.66 0.17 168);"></div><span class="label">Watching</span><span class="count">4</span></div>
+          <div class="lib-tab inactive"><div class="lib-dot" style="background:oklch(0.66 0.17 138);"></div><span class="label" style="font-size:13px;font-weight:600;">Done</span></div>
+          <div class="lib-tab inactive"><div class="lib-dot" style="background:oklch(0.66 0.17 210);"></div><span class="label" style="font-size:13px;font-weight:600;">Plan</span></div>
+          <div class="lib-tab inactive"><div class="lib-dot" style="background:oklch(0.66 0.17 48);"></div><span class="label" style="font-size:13px;font-weight:600;">Hold</span></div>
+        </div>
+        <div class="poster-grid">
+          <div class="pg-item"><div class="art art-0" style="height:100%;"></div><div class="score-badge">★ 9.1</div></div>
+          <div class="pg-item"><div class="art art-6" style="height:100%;"></div><div class="score-badge">★ 8.7</div></div>
+          <div class="pg-item"><div class="art art-5" style="height:100%;"></div><div class="score-badge">★ 8.9</div></div>
+          <div class="pg-item"><div class="art art-2" style="height:100%;"></div></div>
+          <div class="pg-item"><div class="art art-4" style="height:100%;"></div><div class="score-badge">★ 8.4</div></div>
+          <div class="pg-item" style="border:2px dashed var(--line-2);border-radius:11px;background:var(--ink-1);display:flex;align-items:center;justify-content:center;aspect-ratio:2/3;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="custom-section">
+          <div class="custom-hdr"><h3>Custom Lists</h3><div class="custom-new"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New</div></div>
+          <div class="custom-rail">
+            <div class="custom-card"><div class="art art-6" style="flex:1;position:relative;"></div><div class="art art-0" style="flex:1;position:relative;"></div><div class="custom-card-overlay"><div><div class="custom-card-name">Comfort Rewatches</div><div class="custom-card-count">14 TITLES</div></div></div></div>
+            <div class="custom-card"><div class="art art-5" style="flex:1;position:relative;"></div><div class="art art-4" style="flex:1;position:relative;"></div><div class="custom-card-overlay"><div><div class="custom-card-name">Best Openings</div><div class="custom-card-count">22 TITLES</div></div></div></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/></svg><span>Home</span></div>
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Discover</span></div>
+          <div class="tab-plus"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          <div class="tab-item active"><svg width="24" height="24" viewBox="0 0 24 24" fill="var(--txt)" stroke="none"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Lists</span></div>
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>You</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">Library</div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="screen">
+        <div class="prof-banner">
+          <div class="art art-0" style="position:absolute;inset:0;"></div>
+          <div class="prof-banner-overlay"></div>
+        </div>
+        <div class="prof-avatar-row">
+          <div class="prof-avatar">K</div>
+          <div class="prof-btns">
+            <div class="btn-edit">Edit profile</div>
+            <div style="width:38px;height:34px;border-radius:10px;background:var(--ink-3);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--txt)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="prof-name">Kaito Mori</div>
+        <div class="prof-handle">@kaito</div>
+        <div class="prof-bio">Chasing catharsis one episode at a time. ufotable devotee. Will cry at anything.</div>
+        <div class="prof-followers">
+          <div><span class="num">318</span><span class="lbl">Followers</span></div>
+          <div><span class="num">142</span><span class="lbl">Following</span></div>
+        </div>
+        <div class="stat-strip">
+          <div class="stat-cell"><div class="stat-num">214</div><div class="stat-lbl">Watched</div></div>
+          <div class="stat-cell"><div class="stat-num">3,108</div><div class="stat-lbl">Episodes</div></div>
+          <div class="stat-cell"><div class="stat-num">45.2</div><div class="stat-lbl">Days</div></div>
+        </div>
+        <div class="seg-tabs">
+          <div class="seg-tab active">Overview</div>
+          <div class="seg-tab">Stats</div>
+          <div class="seg-tab">Activity</div>
+        </div>
+        <!-- Favorites -->
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-faint);padding:12px 18px 8px;">Favorites</div>
+        <div class="fav-row">
+          <div class="fav-poster"><div class="fav-poster .art-wrap" style="height:98px;border-radius:9px;overflow:hidden;position:relative;"><div class="art art-1" style="position:absolute;inset:0;"></div></div><div class="fav-poster-title">FMA: Brotherhood</div></div>
+          <div class="fav-poster"><div class="fav-poster .art-wrap" style="height:98px;border-radius:9px;overflow:hidden;position:relative;"><div class="art art-0" style="position:absolute;inset:0;"></div></div><div class="fav-poster-title">Demon Slayer</div></div>
+          <div class="fav-poster"><div class="fav-poster .art-wrap" style="height:98px;border-radius:9px;overflow:hidden;position:relative;"><div class="art art-2" style="position:absolute;inset:0;"></div></div><div class="fav-poster-title">Frieren</div></div>
+          <div class="fav-poster"><div class="fav-poster .art-wrap" style="height:98px;border-radius:9px;overflow:hidden;position:relative;"><div class="art art-5" style="position:absolute;inset:0;"></div></div><div class="fav-poster-title">Steins;Gate</div></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/></svg><span>Home</span></div>
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Discover</span></div>
+          <div class="tab-plus"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          <div class="tab-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--txt-faint)" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Lists</span></div>
+          <div class="tab-item active"><svg width="24" height="24" viewBox="0 0 24 24" fill="var(--txt)" stroke="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>You</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">Profile</div>
+  </div>
+
+</div>
+
+<!-- Feature chips row -->
+<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px;padding:0 24px;">
+  <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:22px;background:var(--ink-2);border:1px solid var(--line-2);font-size:12px;font-weight:600;color:var(--txt-dim);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    4-step onboarding
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:22px;background:var(--ink-2);border:1px solid var(--line-2);font-size:12px;font-weight:600;color:var(--txt-dim);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Toast notifications
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:22px;background:var(--ink-2);border:1px solid var(--line-2);font-size:12px;font-weight:600;color:var(--txt-dim);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Anime detail + ratings
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:22px;background:var(--ink-2);border:1px solid var(--line-2);font-size:12px;font-weight:600;color:var(--txt-dim);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Sort &amp; filter search
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:22px;background:var(--ink-2);border:1px solid var(--line-2);font-size:12px;font-weight:600;color:var(--txt-dim);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Custom list creation
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:22px;background:var(--ink-2);border:1px solid var(--line-2);font-size:12px;font-weight:600;color:var(--txt-dim);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Episode progress tracker
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:22px;background:var(--ink-2);border:1px solid var(--line-2);font-size:12px;font-weight:600;color:var(--txt-dim);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Reviews &amp; discussions
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:22px;background:var(--ink-2);border:1px solid var(--line-2);font-size:12px;font-weight:600;color:var(--txt-dim);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Profile + stats (radar/charts)
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:22px;background:var(--ink-2);border:1px solid var(--line-2);font-size:12px;font-weight:600;color:var(--txt-dim);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Notifications
+  </div>
+</div>
+
+</body>
+</html>
