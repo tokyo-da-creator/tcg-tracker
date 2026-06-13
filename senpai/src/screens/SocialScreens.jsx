@@ -81,7 +81,7 @@ export function ReviewScreen({ nav, id }) {
       <TopBar nav={nav} title="Review" />
       <div style={{ flex: 1 }}>
         <div className="tap" onClick={() => { nav.pop(); setTimeout(() => nav.push('detail', { id: a.id }), 80); }} style={{ margin: '0 20px', position: 'relative', borderRadius: 16, overflow: 'hidden', height: 96, border: '1px solid var(--line)' }}>
-          <Art seed={a.id + '-banner'} hue={a.hue} dim={0.3} />
+          <Art seed={a.id + '-banner'} animeId={a.id} useBanner hue={a.hue} dim={0.3} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(0,0,0,0.6), transparent)', display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>{a.title}</div>

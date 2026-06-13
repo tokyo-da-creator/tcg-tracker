@@ -71,7 +71,7 @@ export default function DetailScreen({ nav, id }) {
       {/* Hero */}
       <div style={{ position: 'relative' }}>
         <div style={{ position: 'relative', aspectRatio: '4 / 5' }}>
-          <Art seed={a.id + '-banner'} hue={a.hue} label="Key visual" dim={0.36} />
+          <Art seed={a.id + '-banner'} animeId={a.id} useBanner hue={a.hue} label="Key visual" dim={0.36} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--ink-0) 2%, rgba(8,8,10,0.45) 38%, rgba(8,8,10,0.15) 65%, rgba(8,8,10,0.4) 100%)' }} />
         </div>
         <BackBar nav={nav} title={a.title} scrolled={scrolled} />
@@ -162,7 +162,7 @@ export default function DetailScreen({ nav, id }) {
 
         {/* Trailer */}
         <div className="tap" style={{ marginTop: 18, position: 'relative', borderRadius: 16, overflow: 'hidden', aspectRatio: '16 / 9', border: '1px solid var(--line)' }}>
-          <Art seed={a.id + '-trailer'} hue={a.hue} dim={0.4} />
+          <Art seed={a.id + '-trailer'} animeId={a.id} useBanner hue={a.hue} dim={0.4} />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="play" size={24} color="#fff" />

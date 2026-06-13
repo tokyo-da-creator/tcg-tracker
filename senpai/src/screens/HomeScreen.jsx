@@ -46,7 +46,7 @@ function Hero({ anime, nav }) {
     <div style={{ padding: '2px 18px 8px' }}>
       <div className="tap" onClick={() => nav.push('detail', { id: anime.id })} style={{ position: 'relative', borderRadius: 24, overflow: 'hidden', boxShadow: '0 16px 40px rgba(0,0,0,0.5)' }}>
         <div style={{ position: 'relative', aspectRatio: '5 / 4' }}>
-          <Art seed={anime.id + '-banner'} hue={anime.hue} label="Key visual" dim={0.32} />
+          <Art seed={anime.id + '-banner'} animeId={anime.id} useBanner hue={anime.hue} label="Key visual" dim={0.32} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,8,10,0.96) 2%, rgba(8,8,10,0.2) 48%, transparent 80%)' }} />
           <div style={{ position: 'absolute', top: 14, left: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: 1, color: '#fff', background: 'var(--accent)', padding: '4px 8px', borderRadius: 6, fontWeight: 600 }}>CONTINUE</span>

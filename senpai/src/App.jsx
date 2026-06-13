@@ -5,6 +5,7 @@ import Avatar from './components/Avatar.jsx';
 import Poster from './components/Poster.jsx';
 import Sheet from './components/Sheet.jsx';
 import { ToastProvider } from './components/Toast.jsx';
+import { ImageProvider } from './contexts/ImageContext.jsx';
 
 import HomeScreen from './screens/HomeScreen.jsx';
 import SearchScreen from './screens/SearchScreen.jsx';
@@ -102,15 +103,18 @@ export default function App() {
 
   if (!hasOnboarded) {
     return (
-      <ToastProvider>
-        <div className="app-frame">
-          <OnboardingScreen onComplete={() => setHasOnboarded(true)} />
-        </div>
-      </ToastProvider>
+      <ImageProvider>
+        <ToastProvider>
+          <div className="app-frame">
+            <OnboardingScreen onComplete={() => setHasOnboarded(true)} />
+          </div>
+        </ToastProvider>
+      </ImageProvider>
     );
   }
 
   return (
+    <ImageProvider>
     <ToastProvider>
       <div className="app-frame">
         {/* Base tab screen */}
@@ -135,5 +139,6 @@ export default function App() {
         <QuickLog open={logOpen} onClose={() => setLogOpen(false)} nav={nav} />
       </div>
     </ToastProvider>
+    </ImageProvider>
   );
 }
