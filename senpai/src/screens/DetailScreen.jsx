@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ANIME, byId, CHARACTERS, REVIEWS, DISCUSSIONS, LIST_STATUS, userBy, accentFor, fmt } from '../data.js';
+import { useToast } from '../components/Toast.jsx';
 import Art from '../components/Art.jsx';
 import Avatar from '../components/Avatar.jsx';
 import Button from '../components/Button.jsx';
@@ -49,6 +50,7 @@ function SectionTitle({ children }) {
 
 export default function DetailScreen({ nav, id }) {
   const a = byId[id] || ANIME[0];
+  const toast = useToast();
   const [scrolled, setScrolled] = useState(false);
   const [status, setStatus] = useState(a.status || null);
   const [fav, setFav] = useState(!!a.fav);
@@ -100,7 +102,7 @@ export default function DetailScreen({ nav, id }) {
               {curStatus ? curStatus.label : 'Add to List'}
             </Button>
           </div>
-          <div className="tap" onClick={() => setFav(f => !f)} style={{ width: 54, borderRadius: 14, background: fav ? 'var(--accent-soft)' : 'var(--ink-3)', border: '1px solid ' + (fav ? 'var(--accent)' : 'var(--line-2)'), display: 'flex', alignItems: 'center', justifyContent: 'center', color: fav ? 'var(--accent)' : 'var(--txt)' }}>
+          <div className="tap" onClick={() => { const next = !fav; setFav(next); toast(next ? 'Added to favorites' : 'Removed from favorites', next ? 'heart' : 'info'); }} style={{ width: 54, borderRadius: 14, background: fav ? 'var(--accent-soft)' : 'var(--ink-3)', border: '1px solid ' + (fav ? 'var(--accent)' : 'var(--line-2)'), display: 'flex', alignItems: 'center', justifyContent: 'center', color: fav ? 'var(--accent)' : 'var(--txt)' }}>
             <Icon name={fav ? 'heartFill' : 'heart'} size={22} />
           </div>
           <div className="tap" style={{ width: 54, borderRadius: 14, background: 'var(--ink-3)', border: '1px solid var(--line-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--txt)' }}>
@@ -126,7 +128,7 @@ export default function DetailScreen({ nav, id }) {
             <div style={{ fontSize: 14, fontWeight: 700 }}>Your rating</div>
             <div style={{ fontSize: 11.5, color: 'var(--txt-faint)', marginTop: 1 }}>{myScore ? `You rated this ${myScore * 2}/10` : 'Tap to rate'}</div>
           </div>
-          <StarRating value={myScore} onChange={setMyScore} size={26} />
+          <StarRating value={myScore} onChange={v => { setMyScore(v); if (v) toast(`Rated ${v * 2}/10`, 'star'); }} size={26} />
         </div>
 
         {/* Episode tracker */}
@@ -139,7 +141,7 @@ export default function DetailScreen({ nav, id }) {
             <Progress value={prog} total={a.episodes} height={6} />
             <div style={{ display: 'flex', gap: 10, marginTop: 13 }}>
               <div className="tap" onClick={() => setProg(p => Math.max(0, p - 1))} style={stepBtn}><Icon name="x" size={16} color="var(--txt-dim)" /></div>
-              <div className="tap" onClick={() => setProg(p => Math.min(a.episodes, p + 1))} style={{ ...stepBtn, flex: 1, background: 'var(--accent)', color: '#fff', gap: 7, width: 'auto' }}>
+              <div className="tap" onClick={() => { const next = Math.min(a.episodes, prog + 1); setProg(next); toast(next === a.episodes ? 'All episodes watched!' : `Episode ${next} marked watched`, 'success'); }} style={{ ...stepBtn, flex: 1, background: 'var(--accent)', color: '#fff', gap: 7, width: 'auto' }}>
                 <Icon name="plus" size={17} color="#fff" /> <span style={{ fontSize: 13.5, fontWeight: 700 }}>Watched EP {Math.min(a.episodes, prog + 1)}</span>
               </div>
             </div>
@@ -239,13 +241,13 @@ export default function DetailScreen({ nav, id }) {
       <Sheet open={statusSheet} onClose={() => setStatusSheet(false)} title="Add to list">
         <div style={{ padding: '8px 16px 24px' }}>
           {LIST_STATUS.map(s => (
-            <div key={s.key} className="tap" onClick={() => { setStatus(s.key); setStatusSheet(false); }} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 12px', borderRadius: 14, background: status === s.key ? 'var(--ink-3)' : 'transparent' }}>
+            <div key={s.key} className="tap" onClick={() => { setStatus(s.key); setStatusSheet(false); toast(`Added to ${s.label}`, 'success'); }} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 12px', borderRadius: 14, background: status === s.key ? 'var(--ink-3)' : 'transparent' }}>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: accentFor(s.hue) }} />
               <span style={{ fontSize: 15.5, fontWeight: 600, flex: 1 }}>{s.label}</span>
               {status === s.key && <Icon name="check" size={20} color="var(--accent)" />}
             </div>
           ))}
-          {status && <div className="tap" onClick={() => { setStatus(null); setStatusSheet(false); }} style={{ textAlign: 'center', padding: 14, marginTop: 6, color: 'var(--accent)', fontWeight: 700, fontSize: 14.5 }}>Remove from list</div>}
+          {status && <div className="tap" onClick={() => { setStatus(null); setStatusSheet(false); toast('Removed from list', 'info'); }} style={{ textAlign: 'center', padding: 14, marginTop: 6, color: 'var(--accent)', fontWeight: 700, fontSize: 14.5 }}>Remove from list</div>}
         </div>
       </Sheet>
     </div>

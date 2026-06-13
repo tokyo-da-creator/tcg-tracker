@@ -4,6 +4,7 @@ import Icon from './icons.jsx';
 import Avatar from './components/Avatar.jsx';
 import Poster from './components/Poster.jsx';
 import Sheet from './components/Sheet.jsx';
+import { ToastProvider } from './components/Toast.jsx';
 
 import HomeScreen from './screens/HomeScreen.jsx';
 import SearchScreen from './screens/SearchScreen.jsx';
@@ -12,6 +13,7 @@ import ProfileScreen from './screens/ProfileScreen.jsx';
 import NotificationsScreen from './screens/NotificationsScreen.jsx';
 import DetailScreen from './screens/DetailScreen.jsx';
 import { ReviewScreen, DiscussionScreen } from './screens/SocialScreens.jsx';
+import OnboardingScreen from './screens/OnboardingScreen.jsx';
 
 function TabBar({ active, onTab, onLog }) {
   const items = [
@@ -67,6 +69,7 @@ function QuickLog({ open, onClose, nav }) {
 }
 
 export default function App() {
+  const [hasOnboarded, setHasOnboarded] = useState(false);
   const [tab, setTab] = useState('home');
   const [stack, setStack] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
@@ -97,28 +100,40 @@ export default function App() {
     return <C nav={nav} {...o.props} />;
   }
 
+  if (!hasOnboarded) {
+    return (
+      <ToastProvider>
+        <div className="app-frame">
+          <OnboardingScreen onComplete={() => setHasOnboarded(true)} />
+        </div>
+      </ToastProvider>
+    );
+  }
+
   return (
-    <div className="app-frame">
-      {/* Base tab screen */}
-      <div style={{ position: 'absolute', inset: 0 }} key={tab}>
-        <div style={{ height: '100%', animation: 'fadeIn .25s both' }}>
-          <TabScreen nav={nav} />
+    <ToastProvider>
+      <div className="app-frame">
+        {/* Base tab screen */}
+        <div style={{ position: 'absolute', inset: 0 }} key={tab}>
+          <div style={{ height: '100%', animation: 'fadeIn .25s both' }}>
+            <TabScreen nav={nav} />
+          </div>
         </div>
+
+        {/* Pushed nav stack */}
+        {stack.map((o, i) => (
+          <div key={o.key}
+            onAnimationEnd={() => { if (o.closing) nav._remove(o.key); }}
+            style={{ position: 'absolute', inset: 0, zIndex: 100 + i, background: 'var(--ink-0)', boxShadow: '-8px 0 40px rgba(0,0,0,0.5)', animation: o.closing ? 'slideOut .26s cubic-bezier(.4,0,.6,1) both' : 'slideIn .3s cubic-bezier(.2,.8,.25,1) both' }}>
+            {renderPushed(o)}
+          </div>
+        ))}
+
+        {/* Tab bar (hidden when screen is pushed) */}
+        {stack.length === 0 && <TabBar active={tab} onTab={(k) => { setStack([]); setTab(k); }} onLog={() => setLogOpen(true)} />}
+
+        <QuickLog open={logOpen} onClose={() => setLogOpen(false)} nav={nav} />
       </div>
-
-      {/* Pushed nav stack */}
-      {stack.map((o, i) => (
-        <div key={o.key}
-          onAnimationEnd={() => { if (o.closing) nav._remove(o.key); }}
-          style={{ position: 'absolute', inset: 0, zIndex: 100 + i, background: 'var(--ink-0)', boxShadow: '-8px 0 40px rgba(0,0,0,0.5)', animation: o.closing ? 'slideOut .26s cubic-bezier(.4,0,.6,1) both' : 'slideIn .3s cubic-bezier(.2,.8,.25,1) both' }}>
-          {renderPushed(o)}
-        </div>
-      ))}
-
-      {/* Tab bar (hidden when screen is pushed) */}
-      {stack.length === 0 && <TabBar active={tab} onTab={(k) => { setStack([]); setTab(k); }} onLog={() => setLogOpen(true)} />}
-
-      <QuickLog open={logOpen} onClose={() => setLogOpen(false)} nav={nav} />
-    </div>
+    </ToastProvider>
   );
 }

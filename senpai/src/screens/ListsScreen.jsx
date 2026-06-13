@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ANIME, LIST_STATUS, byId, accentFor } from '../data.js';
+import { useToast } from '../components/Toast.jsx';
 import Art from '../components/Art.jsx';
 import Poster from '../components/Poster.jsx';
 import Progress from '../components/Progress.jsx';
@@ -35,10 +36,14 @@ function ListRow({ a, onClick }) {
 const hdrBtn = { width: 40, height: 40, borderRadius: '50%', background: 'var(--ink-2)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
 export default function ListsScreen({ nav }) {
+  const toast = useToast();
   const [status, setStatus] = useState('watching');
   const [view, setView] = useState('grid');
   const [sort, setSort] = useState('Last updated');
   const [sortOpen, setSortOpen] = useState(false);
+  const [newListOpen, setNewListOpen] = useState(false);
+  const [newListName, setNewListName] = useState('');
+  const [customLists, setCustomLists] = useState(CUSTOM);
 
   const counts = {};
   LIST_STATUS.forEach(s => counts[s.key] = ANIME.filter(a => a.status === s.key).length);
@@ -99,10 +104,10 @@ export default function ListsScreen({ nav }) {
       <div style={{ marginTop: 30 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', marginBottom: 13 }}>
           <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: -0.4 }}>Custom Lists</h3>
-          <div className="tap" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--accent)', fontSize: 13.5, fontWeight: 700 }}><Icon name="plus" size={16} /> New</div>
+          <div className="tap" onClick={() => { setNewListName(''); setNewListOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--accent)', fontSize: 13.5, fontWeight: 700 }}><Icon name="plus" size={16} /> New</div>
         </div>
         <div className="hscroll" style={{ display: 'flex', gap: 13, padding: '0 20px 4px' }}>
-          {CUSTOM.map(l => (
+          {customLists.map(l => (
             <div key={l.id} className="tap" style={{ width: 188, flexShrink: 0 }}>
               <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', height: 116, border: '1px solid var(--line)', display: 'flex' }}>
                 {l.items.slice(0, 4).map((id, i) => (
@@ -133,6 +138,26 @@ export default function ListsScreen({ nav }) {
           ))}
           <div style={{ height: 1, background: 'var(--line)', margin: '8px 12px' }} />
           <div className="tap" style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '14px 12px', color: 'var(--txt)' }}><Icon name="settings" size={20} color="var(--txt-dim)" /><span style={{ fontSize: 15.5, fontWeight: 600 }}>Bulk edit titles</span></div>
+        </div>
+      </Sheet>
+
+      {/* New list sheet */}
+      <Sheet open={newListOpen} onClose={() => setNewListOpen(false)} title="New list">
+        <div style={{ padding: '8px 20px 28px' }}>
+          <div style={{ fontSize: 13, color: 'var(--txt-faint)', marginBottom: 14 }}>Give your list a name to get started.</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 0, background: 'var(--ink-2)', border: '1px solid var(--line-2)', borderRadius: 14, padding: '0 14px', height: 50 }}>
+            <input
+              value={newListName}
+              onChange={e => setNewListName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && newListName.trim()) { setCustomLists(l => [...l, { id: 'cl' + Date.now(), name: newListName.trim(), count: 0, hue: Math.floor(Math.random() * 360), items: [] }]); setNewListOpen(false); toast(`"${newListName.trim()}" list created`, 'success'); } }}
+              placeholder="e.g. Cozy Sunday Watches"
+              autoFocus
+              style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--txt)', fontSize: 15, fontFamily: 'var(--font-sans)' }}
+            />
+          </div>
+          <div className="tap" onClick={() => { if (!newListName.trim()) return; setCustomLists(l => [...l, { id: 'cl' + Date.now(), name: newListName.trim(), count: 0, hue: Math.floor(Math.random() * 360), items: [] }]); setNewListOpen(false); toast(`"${newListName.trim()}" list created`, 'success'); }} style={{ marginTop: 14, textAlign: 'center', padding: '15px', borderRadius: 14, background: newListName.trim() ? 'var(--accent)' : 'var(--ink-3)', color: newListName.trim() ? '#fff' : 'var(--txt-faint)', fontWeight: 700, fontSize: 15, transition: 'background .15s, color .15s' }}>
+            Create list
+          </div>
         </div>
       </Sheet>
     </div>

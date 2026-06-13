@@ -75,9 +75,12 @@ export default function SearchScreen({ nav }) {
   const [sort, setSort] = useState('Popularity');
 
   const ranked = [...ANIME].sort((a, b) => b.score - a.score);
-  let results = ANIME;
+  let results = [...ANIME];
   if (q) results = results.filter(a => (a.title + a.alt + a.genres.join() + a.studio).toLowerCase().includes(q.toLowerCase()));
   if (sel.length) results = results.filter(a => a.genres.some(g => sel.includes(g)));
+  if (sort === 'Score') results = [...results].sort((a, b) => b.score - a.score);
+  else if (sort === 'Newest') results = [...results].sort((a, b) => b.year - a.year);
+  else if (sort === 'A–Z') results = [...results].sort((a, b) => a.title.localeCompare(b.title));
 
   const searching = q.length > 0 || sel.length > 0;
 
